@@ -1,0 +1,17 @@
+node_modules/
+npm-debug.log* 
+.env
+.env.local
+.env.*.local
+/api/
+dist/
+build/
+out/
+*.js.map
+*.d.ts
+.npm
+.yarn/
+.yarnrc
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
