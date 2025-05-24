@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 const Service = require('./Service');
-
+const pool = require('../db');
 /**
 * Get all user roles
 *
@@ -9,8 +9,10 @@ const Service = require('./Service');
 const rolesGET = () => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-      }));
+       const { rows } = await pool.query(
+        `SELECT * FROM "user_role"`
+      )
+      resolve(Service.successResponse(rows));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -28,9 +30,18 @@ const rolesGET = () => new Promise(
 const rolesPOST = ({ userRoleCreate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        userRoleCreate,
-      }));
+      const {
+        role_name
+
+      } = userRoleCreate.body;
+
+      const { rows } = await pool.query(
+        `INSERT INTO "user_role" ("Role")
+        VALUES ($1)
+        RETURNING *`,
+        [role_name]
+      );
+      resolve(Service.successResponse(rows[0], 201));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -48,9 +59,13 @@ const rolesPOST = ({ userRoleCreate }) => new Promise(
 const rolesRole_idDELETE = ({ roleUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        roleUnderscoreid,
-      }));
+      const { rows } = await pool.query(
+        `DELETE FROM "user_role" 
+        WHERE role_id = $1 
+        RETURNING *`,
+        [role_id]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -68,9 +83,12 @@ const rolesRole_idDELETE = ({ roleUnderscoreid }) => new Promise(
 const rolesRole_idGET = ({ roleUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        roleUnderscoreid,
-      }));
+      const { rows } = await pool.query(
+        `SELECT * FROM "user_role" 
+        WHERE role_id = $1`,
+        [role_id]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -89,10 +107,17 @@ const rolesRole_idGET = ({ roleUnderscoreid }) => new Promise(
 const rolesRole_idPUT = ({ roleUnderscoreid, userRoleUpdate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        roleUnderscoreid,
-        userRoleUpdate,
-      }));
+      const role_id = userRoleUpdate.params.role_id;
+      const { new_role_name } = userRoleUpdate.body;
+      
+      const { rows } = await pool.query(
+        `UPDATE "user_role" 
+        SET "Role" = $1
+        WHERE role_id = $2
+        RETURNING *`,
+        [new_role_name, role_id]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -109,8 +134,21 @@ const rolesRole_idPUT = ({ roleUnderscoreid, userRoleUpdate }) => new Promise(
 const usersGET = () => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-      }));
+      const { rows } = await pool.query(
+        `SELECT  
+        u.user_id, 
+        u.username, 
+        u.email, 
+        ur."Role" AS role,
+        u.is_active, 
+        u.created_at, 
+        u.last_login,
+        u.inn,
+        u.organization
+        FROM "user" u
+        JOIN "user_role" ur ON u.role_id = ur.role_id`
+      )
+      resolve(Service.successResponse(rows));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -125,12 +163,31 @@ const usersGET = () => new Promise(
 * userCreate UserCreate 
 * returns User
 * */
-const usersPOST = ({ userCreate }) => new Promise(
+const usersPOST = ( userCreate ) => new Promise(
   async (resolve, reject) => {
+
     try {
-      resolve(Service.successResponse({
-        userCreate,
-      }));
+      const {
+        username,
+        password,
+        email,
+        role_id,
+        is_active = true,
+        inn,
+        organization
+      } = userCreate.body;
+
+const { rows } = await pool.query(
+  `INSERT INTO "user" (
+    username, password, email, role_id, 
+    is_active, created_at, last_login, inn, organization
+  ) 
+  VALUES ($1, $2, $3, $4, $5, NOW(), NOW(), $6, $7)
+  RETURNING *`,
+  [username, password, email, role_id, is_active, inn, organization]
+);
+    
+    resolve(Service.successResponse(rows[0], 201));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -148,9 +205,13 @@ const usersPOST = ({ userCreate }) => new Promise(
 const usersUser_idDELETE = ({ userUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        userUnderscoreid,
-      }));
+      const { rows } = await pool.query(
+        `DELETE FROM "user" 
+        WHERE user_id = $1 
+        RETURNING *`,
+        [user_id]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -167,10 +228,28 @@ const usersUser_idDELETE = ({ userUnderscoreid }) => new Promise(
 * */
 const usersUser_idGET = ({ userUnderscoreid }) => new Promise(
   async (resolve, reject) => {
-    try {
-      resolve(Service.successResponse({
-        userUnderscoreid,
-      }));
+     try {
+    const { rows } = await pool.query(
+      `SELECT 
+        u.*, 
+        ur."Role" AS role_name,
+        up.full_name, 
+        up.phone, 
+        up.position
+        FROM "user" u
+        JOIN "user_role" ur ON u.role_id = ur.role_id
+        LEFT JOIN "user_profile" up 
+        ON u.user_id = up.user_id AND u.role_id = up.role_id
+        WHERE u.user_id = $1`,
+      [userUnderscoreid]
+    );
+
+    if (rows.length === 0) {
+      reject(Service.rejectResponse('User not found', 404));
+      return;
+    }
+
+    resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -189,10 +268,33 @@ const usersUser_idGET = ({ userUnderscoreid }) => new Promise(
 const usersUser_idPUT = ({ userUnderscoreid, userUpdate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        userUnderscoreid,
-        userUpdate,
-      }));
+       const user_id = userUpdate.params.user_id;
+      const {
+        username,
+        password,
+        email,
+        role_id,
+        is_active,
+        inn,
+        organization
+      } = userUpdate.body;
+
+      const { rows } = await pool.query(
+        `UPDATE "user" 
+        SET 
+        username = $1, 
+        password = $2, 
+        email = $3, 
+        role_id = $4, 
+        is_active = $5, 
+        inn = $6, 
+        organization = $7,
+        last_login = NOW()
+        WHERE user_id = $8
+        RETURNING *`,
+        [username, password, email, role_id, is_active, inn, organization, user_id]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
