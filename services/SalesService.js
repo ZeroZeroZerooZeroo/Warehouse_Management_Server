@@ -9,8 +9,14 @@ const Service = require('./Service');
 const salesGET = () => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-      }));
+      const { rows } = await pool.query(
+        `SELECT 
+          sh.*,
+          p.name AS product_name
+        FROM "sales_history" sh
+        LEFT JOIN "product" p ON sh.product_id = p.product_id`
+      );
+      resolve(Service.successResponse(rows));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -28,9 +34,21 @@ const salesGET = () => new Promise(
 const salesPOST = ({ salesHistoryCreate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        salesHistoryCreate,
-      }));
+      const {
+        quantity,
+        price,
+        profit,
+        product_id
+      } = salesHistoryCreate.body;
+
+      const { rows } = await pool.query(
+        `INSERT INTO "sales_history" (
+          date, quantity, price, profit, product_id
+        ) VALUES (NOW(), $1, $2, $3, $4)
+        RETURNING *`,
+        [quantity, price, profit, product_id]
+      );
+      resolve(Service.successResponse(rows[0], 201));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -48,9 +66,13 @@ const salesPOST = ({ salesHistoryCreate }) => new Promise(
 const salesRecord_idDELETE = ({ recordUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        recordUnderscoreid,
-      }));
+     const { rows } = await pool.query(
+        `DELETE FROM "sales_history" 
+        WHERE record_id = $1 
+        RETURNING *`,
+        [recordUnderscoreid]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -68,9 +90,12 @@ const salesRecord_idDELETE = ({ recordUnderscoreid }) => new Promise(
 const salesRecord_idGET = ({ recordUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        recordUnderscoreid,
-      }));
+       const { rows } = await pool.query(
+        `SELECT * FROM "sales_history" 
+        WHERE record_id = $1`,
+        [recordUnderscoreid]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -89,10 +114,26 @@ const salesRecord_idGET = ({ recordUnderscoreid }) => new Promise(
 const salesRecord_idPUT = ({ recordUnderscoreid, salesHistoryUpdate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        recordUnderscoreid,
-        salesHistoryUpdate,
-      }));
+       const { record_id } = recordUnderscoreid;
+      const {
+        quantity,
+        price,
+        profit,
+        product_id
+      } = salesHistoryUpdate.body;
+
+      const { rows } = await pool.query(
+        `UPDATE "sales_history" 
+        SET 
+          quantity = $1,
+          price = $2,
+          profit = $3,
+          product_id = $4
+        WHERE record_id = $5
+        RETURNING *`,
+        [quantity, price, profit, product_id, record_id]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
