@@ -10,9 +10,13 @@ const Service = require('./Service');
 const customersCustomer_idDELETE = ({ customerUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        customerUnderscoreid,
-      }));
+      const { rows } = await pool.query(
+        `DELETE FROM "customer" 
+        WHERE customer_id = $1 
+        RETURNING *`,
+        [customerUnderscoreid]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -30,9 +34,12 @@ const customersCustomer_idDELETE = ({ customerUnderscoreid }) => new Promise(
 const customersCustomer_idGET = ({ customerUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        customerUnderscoreid,
-      }));
+       const { rows } = await pool.query(
+        `SELECT * FROM "customer" 
+        WHERE customer_id = $1`,
+        [customerUnderscoreid]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -51,10 +58,35 @@ const customersCustomer_idGET = ({ customerUnderscoreid }) => new Promise(
 const customersCustomer_idPUT = ({ customerUnderscoreid, customerUpdate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        customerUnderscoreid,
-        customerUpdate,
-      }));
+      const { customer_id } = customerUnderscoreid;
+      const {
+        name,
+        phone,
+        email,
+        address,
+        inn,
+        discount_rate,
+        status,
+        total_purchases
+      } = customerUpdate.body;
+
+      const { rows } = await pool.query(
+        `UPDATE "customer" 
+        SET 
+          name = $1,
+          phone = $2,
+          email = $3,
+          address = $4,
+          inn = $5,
+          discount_rate = $6,
+          status = $7,
+          last_sale_date = NOW(),
+          total_purchases = $8
+        WHERE customer_id = $9
+        RETURNING *`,
+        [name, phone, email, address, inn, discount_rate, status, total_purchases, customer_id]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -71,8 +103,8 @@ const customersCustomer_idPUT = ({ customerUnderscoreid, customerUpdate }) => ne
 const customersGET = () => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-      }));
+      const { rows } = await pool.query(`SELECT * FROM "customer"`);
+      resolve(Service.successResponse(rows));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -90,9 +122,27 @@ const customersGET = () => new Promise(
 const customersPOST = ({ customerCreate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        customerCreate,
-      }));
+       const {
+        name,
+        phone,
+        email,
+        address,
+        inn,
+        discount_rate,
+        status,
+        total_purchases
+      } = customerCreate.body;
+
+      const { rows } = await pool.query(
+        `INSERT INTO "customer" (
+          name, phone, email, address, inn, 
+          discount_rate, status, created_at, 
+          last_sale_date, total_purchases
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW(), $8)
+        RETURNING *`,
+        [name, phone, email, address, inn, discount_rate, status, total_purchases]
+      );
+      resolve(Service.successResponse(rows[0], 201));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
