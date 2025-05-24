@@ -9,8 +9,15 @@ const Service = require('./Service');
 const notificationsGET = () => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-      }));
+       const { rows } = await pool.query(
+        `SELECT 
+          n.*,
+          u.username AS recipient
+        FROM "notification" n
+        LEFT JOIN "user_notification" un ON n.notification_id = un.notification_id
+        LEFT JOIN "user" u ON un.user_id = u.user_id`
+      );
+      resolve(Service.successResponse(rows));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -28,9 +35,13 @@ const notificationsGET = () => new Promise(
 const notificationsNotification_idDELETE = ({ notificationUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        notificationUnderscoreid,
-      }));
+      const { rows } = await pool.query(
+        `DELETE FROM "notification" 
+        WHERE notification_id = $1 
+        RETURNING *`,
+        [notificationUnderscoreid]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -48,9 +59,12 @@ const notificationsNotification_idDELETE = ({ notificationUnderscoreid }) => new
 const notificationsNotification_idGET = ({ notificationUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        notificationUnderscoreid,
-      }));
+     const { rows } = await pool.query(
+        `SELECT * FROM "notification" 
+        WHERE notification_id = $1`,
+        [notificationUnderscoreid]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -69,10 +83,20 @@ const notificationsNotification_idGET = ({ notificationUnderscoreid }) => new Pr
 const notificationsNotification_idPUT = ({ notificationUnderscoreid, notificationUpdate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        notificationUnderscoreid,
-        notificationUpdate,
-      }));
+     const { notification_id } = notificationUnderscoreid;
+      const { title, message, is_read } = notificationUpdate.body;
+
+      const { rows } = await pool.query(
+        `UPDATE "notification" 
+        SET 
+          title = $1,
+          message = $2,
+          is_read = $3
+        WHERE notification_id = $4
+        RETURNING *`,
+        [title, message, is_read, notification_id]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -90,9 +114,14 @@ const notificationsNotification_idPUT = ({ notificationUnderscoreid, notificatio
 const notificationsPOST = ({ notificationCreate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        notificationCreate,
-      }));
+      const { title, message, is_read } = notificationCreate.body;
+      const { rows } = await pool.query(
+        `INSERT INTO "notification" (title, message, is_read)
+        VALUES ($1, $2, $3) 
+        RETURNING *`,
+        [title, message, is_read || false]
+      );
+      resolve(Service.successResponse(rows[0], 201));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
