@@ -9,8 +9,8 @@ const Service = require('./Service');
 const movement_typesGET = () => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-      }));
+      const { rows } = await pool.query(`SELECT * FROM "movement_type"`);
+      resolve(Service.successResponse(rows));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -28,9 +28,13 @@ const movement_typesGET = () => new Promise(
 const movement_typesMovement_type_idDELETE = ({ movementUnderscoretypeUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        movementUnderscoretypeUnderscoreid,
-      }));
+      const { rows } = await pool.query(
+        `DELETE FROM "movement_type" 
+        WHERE movement_type_id = $1 
+        RETURNING *`,
+        [movementUnderscoretypeUnderscoreid]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -48,9 +52,12 @@ const movement_typesMovement_type_idDELETE = ({ movementUnderscoretypeUnderscore
 const movement_typesMovement_type_idGET = ({ movementUnderscoretypeUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        movementUnderscoretypeUnderscoreid,
-      }));
+       const { rows } = await pool.query(
+        `SELECT * FROM "movement_type" 
+        WHERE movement_type_id = $1`,
+        [movementUnderscoretypeUnderscoreid]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -69,10 +76,17 @@ const movement_typesMovement_type_idGET = ({ movementUnderscoretypeUnderscoreid 
 const movement_typesMovement_type_idPUT = ({ movementUnderscoretypeUnderscoreid, movementTypeUpdate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        movementUnderscoretypeUnderscoreid,
-        movementTypeUpdate,
-      }));
+       const { movement_type_id } = movementUnderscoretypeUnderscoreid;
+      const { new_movement_type } = movementTypeUpdate;
+
+      const { rows } = await pool.query(
+        `UPDATE "movement_type" 
+        SET movement_type = $1 
+        WHERE movement_type_id = $2 
+        RETURNING *`,
+        [new_movement_type, movement_type_id]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -90,9 +104,14 @@ const movement_typesMovement_type_idPUT = ({ movementUnderscoretypeUnderscoreid,
 const movement_typesPOST = ({ movementTypeCreate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        movementTypeCreate,
-      }));
+       const { movement_type } = movementTypeCreate;
+      const { rows } = await pool.query(
+        `INSERT INTO "movement_type" (movement_type)
+        VALUES ($1) 
+        RETURNING *`,
+        [movement_type]
+      );
+      resolve(Service.successResponse(rows[0], 201));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -109,8 +128,14 @@ const movement_typesPOST = ({ movementTypeCreate }) => new Promise(
 const stock_movementsGET = () => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-      }));
+      const { rows } = await pool.query(
+        `SELECT 
+          sm.*,
+          mt.movement_type AS type_name
+        FROM "stock_movements" sm
+        JOIN "movement_type" mt ON sm.movement_type_id = mt.movement_type_id`
+      );
+      resolve(Service.successResponse(rows));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -128,9 +153,13 @@ const stock_movementsGET = () => new Promise(
 const stock_movementsMovement_idDELETE = ({ movementUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        movementUnderscoreid,
-      }));
+       const { rows } = await pool.query(
+        `DELETE FROM "stock_movements" 
+        WHERE movement_id = $1 
+        RETURNING *`,
+        [movementUnderscoreid]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -148,9 +177,12 @@ const stock_movementsMovement_idDELETE = ({ movementUnderscoreid }) => new Promi
 const stock_movementsMovement_idGET = ({ movementUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        movementUnderscoreid,
-      }));
+       const { rows } = await pool.query(
+        `SELECT * FROM "stock_movements" 
+        WHERE movement_id = $1`,
+        [movementUnderscoreid]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -169,10 +201,28 @@ const stock_movementsMovement_idGET = ({ movementUnderscoreid }) => new Promise(
 const stock_movementsMovement_idPUT = ({ movementUnderscoreid, stockMovementUpdate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        movementUnderscoreid,
-        stockMovementUpdate,
-      }));
+      const { movement_id } = movementUnderscoreid;
+      const { 
+        quantity, 
+        movement_type, 
+        cost, 
+        comments, 
+        movement_type_id 
+      } = stockMovementUpdate.body;
+
+      const { rows } = await pool.query(
+        `UPDATE "stock_movements" 
+        SET 
+          quantity = $1,
+          movement_type = $2,
+          cost = $3,
+          comments = $4,
+          movement_type_id = $5
+        WHERE movement_id = $6
+        RETURNING *`,
+        [quantity, movement_type, cost, comments, movement_type_id, movement_id]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -190,9 +240,23 @@ const stock_movementsMovement_idPUT = ({ movementUnderscoreid, stockMovementUpda
 const stock_movementsPOST = ({ stockMovementCreate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        stockMovementCreate,
-      }));
+      const { 
+        quantity, 
+        movement_type, 
+        cost, 
+        comments, 
+        movement_type_id 
+      } = stockMovementCreate.body;
+
+      const { rows } = await pool.query(
+        `INSERT INTO "stock_movements" (
+          quantity, movement_type, date_operation, 
+          cost, comments, movement_type_id
+        ) VALUES ($1, $2, NOW(), $3, $4, $5)
+        RETURNING *`,
+        [quantity, movement_type, cost, comments, movement_type_id]
+      );
+      resolve(Service.successResponse(rows[0], 201));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
