@@ -63,7 +63,7 @@ const rolesRole_idDELETE = ({ roleUnderscoreid }) => new Promise(
         `DELETE FROM "user_role" 
         WHERE role_id = $1 
         RETURNING *`,
-        [role_id]
+        [roleUnderscoreid]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -86,7 +86,7 @@ const rolesRole_idGET = ({ roleUnderscoreid }) => new Promise(
       const { rows } = await pool.query(
         `SELECT * FROM "user_role" 
         WHERE role_id = $1`,
-        [role_id]
+        [roleUnderscoreid]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -107,7 +107,7 @@ const rolesRole_idGET = ({ roleUnderscoreid }) => new Promise(
 const rolesRole_idPUT = ({ roleUnderscoreid, userRoleUpdate }) => new Promise(
   async (resolve, reject) => {
     try {
-      const role_id = userRoleUpdate.params.role_id;
+      const role_id = roleUnderscoreid;
       const { new_role_name } = userRoleUpdate.body;
       
       const { rows } = await pool.query(
@@ -209,7 +209,7 @@ const usersUser_idDELETE = ({ userUnderscoreid }) => new Promise(
         `DELETE FROM "user" 
         WHERE user_id = $1 
         RETURNING *`,
-        [user_id]
+        [userUnderscoreid]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -268,7 +268,7 @@ const usersUser_idGET = ({ userUnderscoreid }) => new Promise(
 const usersUser_idPUT = ({ userUnderscoreid, userUpdate }) => new Promise(
   async (resolve, reject) => {
     try {
-      const user_id = userUpdate.params.user_id;
+      const user_id = userUnderscoreid;
       const {
         username,
         password,

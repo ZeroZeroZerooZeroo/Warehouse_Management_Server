@@ -13,7 +13,7 @@ const usersUser_idProfileGET = ({ userUnderscoreid }) => new Promise(
       const { rows } = await pool.query(
         `SELECT * FROM "user_profile"
         WHERE user_id = $1`,
-        [user_id]
+        [userUnderscoreid]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -34,7 +34,7 @@ const usersUser_idProfileGET = ({ userUnderscoreid }) => new Promise(
 const usersUser_idProfilePOST = ({ userUnderscoreid, userProfileCreate }) => new Promise(
   async (resolve, reject) => {
     try {
-      const { user_id } = params;
+      const { user_id } = userUnderscoreid;
       const {
         full_name,
         phone,
@@ -43,7 +43,7 @@ const usersUser_idProfilePOST = ({ userUnderscoreid, userProfileCreate }) => new
         birth_date,
         avatar_path,
         role_id
-      } = body;
+      } = userProfileCreate.body;
 
       const { rows } = await pool.query(
         `INSERT INTO "user_profile" (
@@ -73,7 +73,7 @@ const usersUser_idProfilePOST = ({ userUnderscoreid, userProfileCreate }) => new
 const usersUser_idProfilePUT = ({ userUnderscoreid, userProfileUpdate }) => new Promise(
   async (resolve, reject) => {
     try {
-      const { user_id } = params;
+      const { user_id } = userUnderscoreid;
       const {
         full_name,
         phone,
@@ -81,7 +81,7 @@ const usersUser_idProfilePUT = ({ userUnderscoreid, userProfileUpdate }) => new 
         department,
         birth_date,
         avatar_path
-      } = body;
+      } = userProfileUpdate.body;
 
       const { rows } = await pool.query(
         `UPDATE "user_profile" 
