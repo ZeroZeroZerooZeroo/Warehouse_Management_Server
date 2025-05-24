@@ -10,9 +10,13 @@ const Service = require('./Service');
 const forecastsForecast_idDELETE = ({ forecastUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        forecastUnderscoreid,
-      }));
+      const { rows } = await pool.query(
+        `DELETE FROM "demand_forecasts" 
+        WHERE forecast_id = $1 
+        RETURNING *`,
+        [forecastUnderscoreid]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -30,9 +34,12 @@ const forecastsForecast_idDELETE = ({ forecastUnderscoreid }) => new Promise(
 const forecastsForecast_idGET = ({ forecastUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        forecastUnderscoreid,
-      }));
+      const { rows } = await pool.query(
+        `SELECT * FROM "demand_forecasts" 
+        WHERE forecast_id = $1`,
+        [forecastUnderscoreid]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -51,10 +58,28 @@ const forecastsForecast_idGET = ({ forecastUnderscoreid }) => new Promise(
 const forecastsForecast_idPUT = ({ forecastUnderscoreid, demandForecastUpdate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        forecastUnderscoreid,
-        demandForecastUpdate,
-      }));
+       const { forecast_id } = forecastUnderscoreid;
+      const {
+        period_start,
+        period_end,
+        predicted_quantity,
+        record_id,
+        forecasts_type_id
+      } = demandForecastUpdate.body;
+
+      const { rows } = await pool.query(
+        `UPDATE "demand_forecasts" 
+        SET 
+          period_start = $1,
+          period_end = $2,
+          predicted_quantity = $3,
+          record_id = $4,
+          forecasts_type_id = $5
+        WHERE forecast_id = $6
+        RETURNING *`,
+        [period_start, period_end, predicted_quantity, record_id, forecasts_type_id, forecast_id]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -71,8 +96,14 @@ const forecastsForecast_idPUT = ({ forecastUnderscoreid, demandForecastUpdate })
 const forecastsGET = () => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-      }));
+      const { rows } = await pool.query(
+        `SELECT 
+          df.*,
+          ft.name_forecasts_type AS type_name
+        FROM "demand_forecasts" df
+        JOIN "farecasts_type" ft ON df.forecasts_type_id = ft.forecasts_type_id`
+      );
+      resolve(Service.successResponse(rows));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -90,9 +121,23 @@ const forecastsGET = () => new Promise(
 const forecastsPOST = ({ demandForecastCreate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        demandForecastCreate,
-      }));
+      const {
+        period_start,
+        period_end,
+        predicted_quantity,
+        record_id,
+        forecasts_type_id
+      } = demandForecastCreate.body;
+
+      const { rows } = await pool.query(
+        `INSERT INTO "demand_forecasts" (
+          forecast_date, period_start, period_end, 
+          predicted_quantity, record_id, forecasts_type_id
+        ) VALUES (NOW(), $1, $2, $3, $4, $5)
+        RETURNING *`,
+        [period_start, period_end, predicted_quantity, record_id, forecasts_type_id]
+      );
+      resolve(Service.successResponse(rows[0], 201));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -110,9 +155,13 @@ const forecastsPOST = ({ demandForecastCreate }) => new Promise(
 const forecasts_typesForecasts_type_idDELETE = ({ forecastsUnderscoretypeUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        forecastsUnderscoretypeUnderscoreid,
-      }));
+       const { rows } = await pool.query(
+        `DELETE FROM "farecasts_type" 
+        WHERE forecasts_type_id = $1 
+        RETURNING *`,
+        [forecastsUnderscoretypeUnderscoreid]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -130,9 +179,12 @@ const forecasts_typesForecasts_type_idDELETE = ({ forecastsUnderscoretypeUndersc
 const forecasts_typesForecasts_type_idGET = ({ forecastsUnderscoretypeUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        forecastsUnderscoretypeUnderscoreid,
-      }));
+       const { rows } = await pool.query(
+        `SELECT * FROM "farecasts_type" 
+        WHERE forecasts_type_id = $1`,
+        [forecastsUnderscoretypeUnderscoreid]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -151,10 +203,17 @@ const forecasts_typesForecasts_type_idGET = ({ forecastsUnderscoretypeUnderscore
 const forecasts_typesForecasts_type_idPUT = ({ forecastsUnderscoretypeUnderscoreid, forecastsTypeUpdate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        forecastsUnderscoretypeUnderscoreid,
-        forecastsTypeUpdate,
-      }));
+      const { forecasts_type_id } = forecastsUnderscoretypeUnderscoreid;
+      const { new_name } = forecastsTypeUpdate.body;
+
+      const { rows } = await pool.query(
+        `UPDATE "farecasts_type" 
+        SET name_forecasts_type = $1 
+        WHERE forecasts_type_id = $2 
+        RETURNING *`,
+        [new_name, forecasts_type_id]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -171,8 +230,8 @@ const forecasts_typesForecasts_type_idPUT = ({ forecastsUnderscoretypeUnderscore
 const forecasts_typesGET = () => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-      }));
+      const { rows } = await pool.query(`SELECT * FROM "farecasts_type"`);
+      resolve(Service.successResponse(rows));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -190,9 +249,14 @@ const forecasts_typesGET = () => new Promise(
 const forecasts_typesPOST = ({ forecastsTypeCreate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        forecastsTypeCreate,
-      }));
+      const { forecasts_type_id, name_forecasts_type } = forecastsTypeCreate.body;
+      const { rows } = await pool.query(
+        `INSERT INTO "farecasts_type" (forecasts_type_id, name_forecasts_type)
+        VALUES ($1, $2) 
+        RETURNING *`,
+        [forecasts_type_id, name_forecasts_type]
+      );
+      resolve(Service.successResponse(rows[0], 201));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
