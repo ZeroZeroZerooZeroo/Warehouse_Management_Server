@@ -10,9 +10,12 @@ const Service = require('./Service');
 const usersUser_idProfileGET = ({ userUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        userUnderscoreid,
-      }));
+      const { rows } = await pool.query(
+        `SELECT * FROM "user_profile"
+        WHERE user_id = $1`,
+        [user_id]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -31,10 +34,27 @@ const usersUser_idProfileGET = ({ userUnderscoreid }) => new Promise(
 const usersUser_idProfilePOST = ({ userUnderscoreid, userProfileCreate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        userUnderscoreid,
-        userProfileCreate,
-      }));
+      const { user_id } = params;
+      const {
+        full_name,
+        phone,
+        position,
+        department,
+        birth_date,
+        avatar_path,
+        role_id
+      } = body;
+
+      const { rows } = await pool.query(
+        `INSERT INTO "user_profile" (
+          full_name, phone, position, department, 
+          birth_date, avatar_path, user_id, role_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING *`,
+        [full_name, phone, position, department, 
+         birth_date, avatar_path, user_id, role_id]
+      );
+      resolve(Service.successResponse(rows[0], 201));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -53,10 +73,31 @@ const usersUser_idProfilePOST = ({ userUnderscoreid, userProfileCreate }) => new
 const usersUser_idProfilePUT = ({ userUnderscoreid, userProfileUpdate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        userUnderscoreid,
-        userProfileUpdate,
-      }));
+      const { user_id } = params;
+      const {
+        full_name,
+        phone,
+        position,
+        department,
+        birth_date,
+        avatar_path
+      } = body;
+
+      const { rows } = await pool.query(
+        `UPDATE "user_profile" 
+        SET 
+          full_name = $1,
+          phone = $2,
+          position = $3,
+          department = $4,
+          birth_date = $5,
+          avatar_path = $6
+        WHERE user_id = $7
+        RETURNING *`,
+        [full_name, phone, position, department, 
+         birth_date, avatar_path, user_id]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
