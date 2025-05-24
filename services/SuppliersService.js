@@ -9,8 +9,8 @@ const Service = require('./Service');
 const suppliersGET = () => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-      }));
+      const { rows } = await pool.query(`SELECT * FROM "supplier"`);
+      resolve(Service.successResponse(rows));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -28,9 +28,27 @@ const suppliersGET = () => new Promise(
 const suppliersPOST = ({ supplierCreate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        supplierCreate,
-      }));
+       const {
+        name_company,
+        name,
+        phone,
+        email,
+        address,
+        inn,
+        kpp,
+        bank_details
+      } = supplierCreate.body;
+
+      const { rows } = await pool.query(
+        `INSERT INTO "supplier" (
+          name_company, name, phone, email, 
+          address, inn, kpp, bank_details, 
+          update_at, last_purchase_date
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+        RETURNING *`,
+        [name_company, name, phone, email, address, inn, kpp, bank_details]
+      );
+      resolve(Service.successResponse(rows[0], 201));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -48,9 +66,13 @@ const suppliersPOST = ({ supplierCreate }) => new Promise(
 const suppliersSupplier_idDELETE = ({ supplierUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        supplierUnderscoreid,
-      }));
+     const { rows } = await pool.query(
+        `DELETE FROM "supplier" 
+        WHERE supplier_id = $1 
+        RETURNING *`,
+        [supplierUnderscoreid]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -68,9 +90,12 @@ const suppliersSupplier_idDELETE = ({ supplierUnderscoreid }) => new Promise(
 const suppliersSupplier_idGET = ({ supplierUnderscoreid }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        supplierUnderscoreid,
-      }));
+      const { rows } = await pool.query(
+        `SELECT * FROM "supplier" 
+        WHERE supplier_id = $1`,
+        [supplierUnderscoreid]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
@@ -89,10 +114,35 @@ const suppliersSupplier_idGET = ({ supplierUnderscoreid }) => new Promise(
 const suppliersSupplier_idPUT = ({ supplierUnderscoreid, supplierUpdate }) => new Promise(
   async (resolve, reject) => {
     try {
-      resolve(Service.successResponse({
-        supplierUnderscoreid,
-        supplierUpdate,
-      }));
+     const { supplier_id } = supplierUnderscoreid;
+      const {
+        name_company,
+        name,
+        phone,
+        email,
+        address,
+        inn,
+        kpp,
+        bank_details
+      } = supplierUpdate.body;
+
+      const { rows } = await pool.query(
+        `UPDATE "supplier" 
+        SET 
+          name_company = $1,
+          name = $2,
+          phone = $3,
+          email = $4,
+          address = $5,
+          inn = $6,
+          kpp = $7,
+          bank_details = $8,
+          update_at = NOW()
+        WHERE supplier_id = $9
+        RETURNING *`,
+        [name_company, name, phone, email, address, inn, kpp, bank_details, supplier_id]
+      );
+      resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
         e.message || 'Invalid input',
