@@ -11,6 +11,7 @@ const bodyParser = require('body-parser');
 const OpenApiValidator = require('express-openapi-validator');
 const logger = require('./logger');
 const config = require('./config');
+const ForecastsNNController = require('./controllers/ForecastsNNController');
 
 class ExpressServer {
   constructor(port, openApiYaml) {
@@ -52,6 +53,10 @@ class ExpressServer {
         operationHandlers: path.join(__dirname),
         fileUploader: { dest: config.FILE_UPLOAD_PATH },
       }),
+    );
+    this.app.post(
+      '/forecasts/generate', 
+      (req, res) => ForecastsNNController.generateDemandForecast(req, res)
     );
   }
 
