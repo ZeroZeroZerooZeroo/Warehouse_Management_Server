@@ -13,15 +13,52 @@ const notificationsGET = async (request, response) => {
 };
 
 const notificationsNotification_idDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.notificationsNotification_idDELETE);
+   const notification_id = Number(request.params.notification_id);
+    
+    if (isNaN(notification_id)) {
+      return response.status(400).json({ error: "Invalid notification ID" });
+    }
+  
+    try {
+      const result = await service.notificationsNotification_idDELETE(notification_id);
+      
+      response.status(204).end();
+    } catch (e) {
+      response.status(e.status || 500).json({ 
+        error: e.message || 'Internal server error' 
+      });
+    }
 };
 
 const notificationsNotification_idGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.notificationsNotification_idGET);
+   const notification_id = Number(request.params.notification_id);
+    
+    if (isNaN(notification_id)) {
+      return response.status(400).json({ error: "Invalid notification ID" });
+    }
+  
+    try {
+      const notificationData = await service.notificationsNotification_idGET(notification_id);
+      response.status(200).json(notificationData);  
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 const notificationsNotification_idPUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.notificationsNotification_idPUT);
+ try {
+     const notification_id = Number(request.params.notification_id);
+     if (isNaN(notification_id)) {
+       return response.status(400).json({ error: "Invalid notification ID" });
+     }
+ 
+     const updateData = request.body;
+ 
+     const result = await service.notificationsNotification_idPUT(notification_id, updateData);
+     response.status(200).json(result.data);
+   } catch (e) {
+     response.status(e.status || 500).json({ error: e.message });
+   }
 };
 
 const notificationsPOST = async (request, response) => {

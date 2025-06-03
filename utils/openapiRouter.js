@@ -58,7 +58,7 @@ function openApiRouter() {
       }
     } catch (error) {
       console.error(error);
-      const err = { code: 500, error: error.message };
+      const err = { code: 123, error: error.message };
       handleError(err, request, response, next);
     }
   };

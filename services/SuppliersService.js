@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 const Service = require('./Service');
-
+const pool = require('../db');
 /**
 * Get all suppliers
 *
@@ -25,7 +25,7 @@ const suppliersGET = () => new Promise(
 * supplierCreate SupplierCreate 
 * returns Supplier
 * */
-const suppliersPOST = ({ supplierCreate }) => new Promise(
+const suppliersPOST = ( supplierCreate ) => new Promise(
   async (resolve, reject) => {
     try {
        const {
@@ -63,14 +63,14 @@ const suppliersPOST = ({ supplierCreate }) => new Promise(
 * supplierUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const suppliersSupplier_idDELETE = ({ supplierUnderscoreid }) => new Promise(
+const suppliersSupplier_idDELETE = ( supplier_id ) => new Promise(
   async (resolve, reject) => {
     try {
      const { rows } = await pool.query(
         `DELETE FROM "supplier" 
         WHERE supplier_id = $1 
         RETURNING *`,
-        [supplierUnderscoreid]
+        [supplier_id]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -87,19 +87,23 @@ const suppliersSupplier_idDELETE = ({ supplierUnderscoreid }) => new Promise(
 * supplierUnderscoreid Integer 
 * returns Supplier
 * */
-const suppliersSupplier_idGET = ({ supplierUnderscoreid }) => new Promise(
+const suppliersSupplier_idGET = ( supplier_id ) => new Promise(
   async (resolve, reject) => {
     try {
       const { rows } = await pool.query(
         `SELECT * FROM "supplier" 
         WHERE supplier_id = $1`,
-        [supplierUnderscoreid]
+        [supplier_id]
       );
-      resolve(Service.successResponse(rows[0]));
+      if (rows.length === 0) {
+        return reject(Service.rejectResponse('Suppliers not found', 404));
+      }
+
+      resolve(rows[0]);
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -111,10 +115,12 @@ const suppliersSupplier_idGET = ({ supplierUnderscoreid }) => new Promise(
 * supplierUpdate SupplierUpdate 
 * returns Supplier
 * */
-const suppliersSupplier_idPUT = ({ supplierUnderscoreid, supplierUpdate }) => new Promise(
+const suppliersSupplier_idPUT = ( supplier_id, updateData ) => new Promise(
   async (resolve, reject) => {
     try {
-     const { supplier_id } = supplierUnderscoreid;
+      if (typeof supplier_id !== 'number' || isNaN(supplier_id)) {
+        return reject(Service.rejectResponse('Invalid supplier ID', 400));
+      }
       const {
         name_company,
         name,
@@ -124,7 +130,7 @@ const suppliersSupplier_idPUT = ({ supplierUnderscoreid, supplierUpdate }) => ne
         inn,
         kpp,
         bank_details
-      } = supplierUpdate.body;
+      } = updateData;
 
       const { rows } = await pool.query(
         `UPDATE "supplier" 
@@ -142,11 +148,16 @@ const suppliersSupplier_idPUT = ({ supplierUnderscoreid, supplierUpdate }) => ne
         RETURNING *`,
         [name_company, name, phone, email, address, inn, kpp, bank_details, supplier_id]
       );
+
+      if (rows.length === 0) {
+        return reject(Service.rejectResponse('Supplier not found', 404));
+      }
+
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },

@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 const Service = require('./Service');
-
+const pool = require('../db');
 /**
 * Get all sales records
 *
@@ -31,7 +31,7 @@ const salesGET = () => new Promise(
 * salesHistoryCreate SalesHistoryCreate 
 * returns SalesHistory
 * */
-const salesPOST = ({ salesHistoryCreate }) => new Promise(
+const salesPOST = ( salesHistoryCreate ) => new Promise(
   async (resolve, reject) => {
     try {
       const {
@@ -63,14 +63,14 @@ const salesPOST = ({ salesHistoryCreate }) => new Promise(
 * recordUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const salesRecord_idDELETE = ({ recordUnderscoreid }) => new Promise(
+const salesRecord_idDELETE = ( record_id ) => new Promise(
   async (resolve, reject) => {
     try {
      const { rows } = await pool.query(
         `DELETE FROM "sales_history" 
         WHERE record_id = $1 
         RETURNING *`,
-        [recordUnderscoreid]
+        [record_id]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -87,19 +87,22 @@ const salesRecord_idDELETE = ({ recordUnderscoreid }) => new Promise(
 * recordUnderscoreid Integer 
 * returns SalesHistory
 * */
-const salesRecord_idGET = ({ recordUnderscoreid }) => new Promise(
+const salesRecord_idGET = ( record_id ) => new Promise(
   async (resolve, reject) => {
     try {
        const { rows } = await pool.query(
         `SELECT * FROM "sales_history" 
         WHERE record_id = $1`,
-        [recordUnderscoreid]
+        [record_id]
       );
-      resolve(Service.successResponse(rows[0]));
+       if (rows.length === 0) {
+        return reject(Service.rejectResponse('Record not found', 404));
+      }
+      resolve(rows[0]);
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+       e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -111,16 +114,19 @@ const salesRecord_idGET = ({ recordUnderscoreid }) => new Promise(
 * salesHistoryUpdate SalesHistoryUpdate 
 * returns SalesHistory
 * */
-const salesRecord_idPUT = ({ recordUnderscoreid, salesHistoryUpdate }) => new Promise(
+const salesRecord_idPUT = ( record_id, updateData ) => new Promise(
   async (resolve, reject) => {
     try {
-       const { record_id } = recordUnderscoreid;
+
+      if (typeof record_id !== 'number' || isNaN(record_id)) {
+        return reject(Service.rejectResponse('Invalid record ID', 400));
+      }
       const {
         quantity,
         price,
         profit,
         product_id
-      } = salesHistoryUpdate.body;
+      } = updateData;
 
       const { rows } = await pool.query(
         `UPDATE "sales_history" 
@@ -133,11 +139,14 @@ const salesRecord_idPUT = ({ recordUnderscoreid, salesHistoryUpdate }) => new Pr
         RETURNING *`,
         [quantity, price, profit, product_id, record_id]
       );
+       if (rows.length === 0) {
+        return reject(Service.rejectResponse('Record not found', 404));
+      }
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+   e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },

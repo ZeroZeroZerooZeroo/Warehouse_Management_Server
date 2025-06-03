@@ -10,6 +10,7 @@ const StockMovementsService = require('./StockMovementsService');
 const SuppliersService = require('./SuppliersService');
 const UsersService = require('./UsersService');
 const WarehousesService = require('./WarehousesService');
+const ForecastsNNService = require('./ForecastsNNService');
 
 module.exports = {
   CustomersService,
@@ -24,4 +25,5 @@ module.exports = {
   SuppliersService,
   UsersService,
   WarehousesService,
+  ForecastsNNService,
 };

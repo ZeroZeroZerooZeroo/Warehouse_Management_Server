@@ -10,6 +10,7 @@ const StockMovementsController = require('./StockMovementsController');
 const SuppliersController = require('./SuppliersController');
 const UsersController = require('./UsersController');
 const WarehousesController = require('./WarehousesController');
+const ForecastsNNController = require('./ForecastsNNController');
 
 module.exports = {
   CustomersController,
@@ -24,4 +25,5 @@ module.exports = {
   SuppliersController,
   UsersController,
   WarehousesController,
+  ForecastsNNController,
 };

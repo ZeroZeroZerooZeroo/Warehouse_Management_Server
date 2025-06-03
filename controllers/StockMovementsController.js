@@ -13,15 +13,52 @@ const movement_typesGET = async (request, response) => {
 };
 
 const movement_typesMovement_type_idDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.movement_typesMovement_type_idDELETE);
+  const movement_type_id = Number(request.params.movement_type_id);
+    
+    if (isNaN(movement_type_id)) {
+      return response.status(400).json({ error: "Invalid movement type ID" });
+    }
+  
+    try {
+      const result = await service.movement_typesMovement_type_idDELETE(movement_type_id);
+      
+      response.status(204).end();
+    } catch (e) {
+      response.status(e.status || 500).json({ 
+        error: e.message || 'Internal server error' 
+      });
+    }
 };
 
 const movement_typesMovement_type_idGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.movement_typesMovement_type_idGET);
+  const movement_type_id = Number(request.params.movement_type_id);
+    
+    if (isNaN(movement_type_id)) {
+      return response.status(400).json({ error: "Invalid movement type ID" });
+    }
+  
+    try {
+      const movementData = await service.movement_typesMovement_type_idGET(movement_type_id);
+      response.status(200).json(movementData);  
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 const movement_typesMovement_type_idPUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.movement_typesMovement_type_idPUT);
+ try {
+     const movement_type_id = Number(request.params.movement_type_id);
+     if (isNaN(movement_type_id)) {
+       return response.status(400).json({ error: "Invalid movement type ID" });
+     }
+ 
+     const updateData = request.body;
+ 
+     const result = await service.movement_typesMovement_type_idPUT(movement_type_id, updateData);
+     response.status(200).json(result.data);
+   } catch (e) {
+     response.status(e.status || 500).json({ error: e.message });
+   }
 };
 
 const movement_typesPOST = async (request, response) => {
@@ -33,15 +70,52 @@ const stock_movementsGET = async (request, response) => {
 };
 
 const stock_movementsMovement_idDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.stock_movementsMovement_idDELETE);
+    const movement_id = Number(request.params.movement_id);
+    
+    if (isNaN(movement_id)) {
+      return response.status(400).json({ error: "Invalid stock ID" });
+    }
+  
+    try {
+      const result = await service.stock_movementsMovement_idDELETE(movement_id);
+      
+      response.status(204).end();
+    } catch (e) {
+      response.status(e.status || 500).json({ 
+        error: e.message || 'Internal server error' 
+      });
+    }
 };
 
 const stock_movementsMovement_idGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.stock_movementsMovement_idGET);
+  const movement_id = Number(request.params.movement_id);
+    
+    if (isNaN(movement_id)) {
+      return response.status(400).json({ error: "Invalid stock ID" });
+    }
+  
+    try {
+      const stockData = await service.stock_movementsMovement_idGET(movement_id);
+      response.status(200).json(stockData);  
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 const stock_movementsMovement_idPUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.stock_movementsMovement_idPUT);
+   try {
+      const movement_id = Number(request.params.movement_id);
+      if (isNaN(movement_id)) {
+        return response.status(400).json({ error: "Invalid stock ID" });
+      }
+  
+      const updateData = request.body;
+  
+      const result = await service.stock_movementsMovement_idPUT(movement_id, updateData);
+      response.status(200).json(result.data);
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 const stock_movementsPOST = async (request, response) => {

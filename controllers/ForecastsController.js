@@ -9,15 +9,52 @@
 const Controller = require('./Controller');
 const service = require('../services/ForecastsService');
 const forecastsForecast_idDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.forecastsForecast_idDELETE);
+  const forecast_id = Number(request.params.forecast_id);
+    
+    if (isNaN(forecast_id)) {
+      return response.status(400).json({ error: "Invalid forecast ID" });
+    }
+  
+    try {
+      const result = await service.forecastsForecast_idDELETE(forecast_id);
+      
+      response.status(204).end();
+    } catch (e) {
+      response.status(e.status || 500).json({ 
+        error: e.message || 'Internal server error' 
+      });
+    }
 };
 
 const forecastsForecast_idGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.forecastsForecast_idGET);
+  const forecast_id = Number(request.params.forecast_id);
+    
+    if (isNaN(forecast_id)) {
+      return response.status(400).json({ error: "Invalid forecast ID" });
+    }
+  
+    try {
+      const forecastData = await service.forecastsForecast_idGET(forecast_id);
+      response.status(200).json(forecastData);  
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 const forecastsForecast_idPUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.forecastsForecast_idPUT);
+   try {
+      const forecast_id = Number(request.params.forecast_id);
+      if (isNaN(forecast_id)) {
+        return response.status(400).json({ error: "Invalid forecast ID" });
+      }
+  
+      const updateData = request.body;
+  
+      const result = await service.forecastsForecast_idPUT(forecast_id, updateData);
+      response.status(200).json(result.data);
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 const forecastsGET = async (request, response) => {
@@ -29,15 +66,52 @@ const forecastsPOST = async (request, response) => {
 };
 
 const forecasts_typesForecasts_type_idDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.forecasts_typesForecasts_type_idDELETE);
+  const forecasts_type_id = Number(request.params.forecasts_type_id);
+    
+    if (isNaN(forecasts_type_id)) {
+      return response.status(400).json({ error: "Invalid forecasts_types ID" });
+    }
+  
+    try {
+      const result = await service.forecasts_typesForecasts_type_idDELETE(forecasts_type_id);
+      
+      response.status(204).end();
+    } catch (e) {
+      response.status(e.status || 500).json({ 
+        error: e.message || 'Internal server error' 
+      });
+    }
 };
 
 const forecasts_typesForecasts_type_idGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.forecasts_typesForecasts_type_idGET);
+ const forecasts_type_id = Number(request.params.forecasts_type_id);
+   
+   if (isNaN(forecasts_type_id)) {
+     return response.status(400).json({ error: "Invalid forecasts_types ID" });
+   }
+ 
+   try {
+     const forecasts_typesData = await service.forecasts_typesForecasts_type_idGET(forecasts_type_id);
+     response.status(200).json(forecasts_typesData);  
+   } catch (e) {
+     response.status(e.status || 500).json({ error: e.message });
+   }
 };
 
 const forecasts_typesForecasts_type_idPUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.forecasts_typesForecasts_type_idPUT);
+ try {
+     const forecasts_type_id = Number(request.params.forecasts_type_id);
+     if (isNaN(forecasts_type_id)) {
+       return response.status(400).json({ error: "Invalid forecasts_types ID" });
+     }
+ 
+     const updateData = request.body;
+ 
+     const result = await service.forecasts_typesForecasts_type_idPUT(forecasts_type_id, updateData);
+     response.status(200).json(result.data);
+   } catch (e) {
+     response.status(e.status || 500).json({ error: e.message });
+   }
 };
 
 const forecasts_typesGET = async (request, response) => {

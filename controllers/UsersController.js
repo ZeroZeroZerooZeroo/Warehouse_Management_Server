@@ -17,15 +17,54 @@ const rolesPOST = async (request, response) => {
 };
 
 const rolesRole_idDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.rolesRole_idDELETE);
+const role_id = Number(request.params.role_id);
+  
+  if (isNaN(role_id)) {
+    return response.status(400).json({ error: "Invalid role ID" });
+  }
+
+  try {
+    const result = await service.rolesRole_idDELETE(role_id);
+    
+    response.status(204).end();
+  } catch (e) {
+    response.status(e.status || 500).json({ 
+      error: e.message || 'Internal server error' 
+    });
+  }
+
 };
 
 const rolesRole_idGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.rolesRole_idGET);
+ const role_id = Number(request.params.role_id);
+  
+  if (isNaN(role_id)) {
+    return response.status(400).json({ error: "Invalid role ID" });
+  }
+
+  try {
+    const roleData = await service.rolesRole_idGET(role_id);
+    response.status(200).json(roleData);  
+  } catch (e) {
+    response.status(e.status || 500).json({ error: e.message });
+  }
+
 };
 
 const rolesRole_idPUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.rolesRole_idPUT);
+ try {
+    const role_id = Number(request.params.role_id);
+    if (isNaN(role_id)) {
+      return response.status(400).json({ error: "Invalid role ID" });
+    }
+
+    const updateData = request.body;
+
+    const result = await service.rolesRole_idPUT(role_id, updateData);
+    response.status(200).json(result.data);
+  } catch (e) {
+    response.status(e.status || 500).json({ error: e.message });
+  }
 };
 
 const usersGET = async (request, response) => {
@@ -37,15 +76,54 @@ const usersPOST = async (request, response) => {
 };
 
 const usersUser_idDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.usersUser_idDELETE);
+const user_id = Number(request.params.user_id);
+  
+  if (isNaN(user_id)) {
+    return response.status(400).json({ error: "Invalid user ID" });
+  }
+
+  try {
+    const result = await service.usersUser_idDELETE(user_id);
+    
+    response.status(204).end();
+  } catch (e) {
+    response.status(e.status || 500).json({ 
+      error: e.message || 'Internal server error' 
+    });
+  }
 };
 
 const usersUser_idGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.usersUser_idGET);
+ const user_id = Number(request.params.user_id);
+  
+  if (isNaN(user_id)) {
+    return response.status(400).json({ error: "Invalid user ID" });
+  }
+
+  try {
+    const userData = await service.usersUser_idGET(user_id);
+    response.status(200).json(userData);  
+  } catch (e) {
+    response.status(e.status || 500).json({ error: e.message });
+  }
+
+  
 };
 
 const usersUser_idPUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.usersUser_idPUT);
+ try {
+    const user_id = Number(request.params.user_id);
+    if (isNaN(user_id)) {
+      return response.status(400).json({ error: "Invalid user ID" });
+    }
+
+    const updateData = request.body;
+
+    const result = await service.usersUser_idPUT(user_id, updateData);
+    response.status(200).json(result.data);
+  } catch (e) {
+    response.status(e.status || 500).json({ error: e.message });
+  }
 };
 
 

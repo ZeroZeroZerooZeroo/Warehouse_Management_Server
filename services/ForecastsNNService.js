@@ -1,6 +1,6 @@
 const { exec } = require('child_process');
 const Service = require('./Service');
-const pool = require('./db');
+const pool = require('../db');
 const { PythonShell } = require('python-shell');
 
 const executePythonScript  = (inputData, modelType) => {

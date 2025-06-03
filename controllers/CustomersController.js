@@ -9,15 +9,51 @@
 const Controller = require('./Controller');
 const service = require('../services/CustomersService');
 const customersCustomer_idDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.customersCustomer_idDELETE);
+  const customer_id = Number(request.params.customer_id);
+  
+  if (isNaN(customer_id)) {
+    return response.status(400).json({ error: "Invalid customer ID" });
+  }
+
+  try {
+    const result = await service.customersCustomer_idDELETE(customer_id);
+    
+    response.status(204).end();
+  } catch (e) {
+    response.status(e.status || 500).json({ 
+      error: e.message || 'Internal server error' 
+    });
+  }
 };
 
 const customersCustomer_idGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.customersCustomer_idGET);
-};
+  const customer_id = Number(request.params.customer_id);
+  
+  if (isNaN(customer_id)) {
+    return response.status(400).json({ error: "Invalid customer ID" });
+  }
 
+  try {
+    const customerData = await service.customersCustomer_idGET(customer_id);
+    response.status(200).json(customerData);  
+  } catch (e) {
+    response.status(e.status || 500).json({ error: e.message });
+  }
+};
 const customersCustomer_idPUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.customersCustomer_idPUT);
+  try {
+    const customer_id = Number(request.params.customer_id);
+    if (isNaN(customer_id)) {
+      return response.status(400).json({ error: "Invalid customer ID" });
+    }
+
+    const updateData = request.body;
+
+    const result = await service.customersCustomer_idPUT(customer_id, updateData);
+    response.status(200).json(result.data);
+  } catch (e) {
+    response.status(e.status || 500).json({ error: e.message });
+  }
 };
 
 const customersGET = async (request, response) => {

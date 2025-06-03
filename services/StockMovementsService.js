@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 const Service = require('./Service');
-
+const pool = require('../db');
 /**
 * Get all movement types
 *
@@ -25,14 +25,14 @@ const movement_typesGET = () => new Promise(
 * movementUnderscoretypeUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const movement_typesMovement_type_idDELETE = ({ movementUnderscoretypeUnderscoreid }) => new Promise(
+const movement_typesMovement_type_idDELETE = ( movement_type_id ) => new Promise(
   async (resolve, reject) => {
     try {
       const { rows } = await pool.query(
         `DELETE FROM "movement_type" 
         WHERE movement_type_id = $1 
         RETURNING *`,
-        [movementUnderscoretypeUnderscoreid]
+        [movement_type_id]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -49,19 +49,24 @@ const movement_typesMovement_type_idDELETE = ({ movementUnderscoretypeUnderscore
 * movementUnderscoretypeUnderscoreid Integer 
 * returns MovementType
 * */
-const movement_typesMovement_type_idGET = ({ movementUnderscoretypeUnderscoreid }) => new Promise(
+const movement_typesMovement_type_idGET = ( movement_type_id ) => new Promise(
   async (resolve, reject) => {
     try {
        const { rows } = await pool.query(
         `SELECT * FROM "movement_type" 
         WHERE movement_type_id = $1`,
-        [movementUnderscoretypeUnderscoreid]
+        [movement_type_id]
       );
-      resolve(Service.successResponse(rows[0]));
+
+      if (rows.length === 0) {
+        return reject(Service.rejectResponse('Movment type not found', 404));
+      }
+
+      resolve(rows[0]);
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+         e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -73,11 +78,13 @@ const movement_typesMovement_type_idGET = ({ movementUnderscoretypeUnderscoreid 
 * movementTypeUpdate MovementTypeUpdate 
 * returns MovementType
 * */
-const movement_typesMovement_type_idPUT = ({ movementUnderscoretypeUnderscoreid, movementTypeUpdate }) => new Promise(
+const movement_typesMovement_type_idPUT = ( movement_type_id, updateData ) => new Promise(
   async (resolve, reject) => {
     try {
-       const { movement_type_id } = movementUnderscoretypeUnderscoreid;
-      const { new_movement_type } = movementTypeUpdate;
+      if (typeof movement_type_id !== 'number' || isNaN(movement_type_id)) {
+        return reject(Service.rejectResponse('Invalid movment type ID', 400));
+      }
+      const { new_movement_type } = updateData;
 
       const { rows } = await pool.query(
         `UPDATE "movement_type" 
@@ -86,11 +93,16 @@ const movement_typesMovement_type_idPUT = ({ movementUnderscoretypeUnderscoreid,
         RETURNING *`,
         [new_movement_type, movement_type_id]
       );
+
+      if (rows.length === 0) {
+        return reject(Service.rejectResponse('Movment type not found', 404));
+      }
+
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -101,12 +113,12 @@ const movement_typesMovement_type_idPUT = ({ movementUnderscoretypeUnderscoreid,
 * movementTypeCreate MovementTypeCreate 
 * returns MovementType
 * */
-const movement_typesPOST = ({ movementTypeCreate }) => new Promise(
+const movement_typesPOST = ( movementTypeCreate ) => new Promise(
   async (resolve, reject) => {
     try {
-       const { movement_type } = movementTypeCreate;
+      const { movement_type } = movementTypeCreate.body;
       const { rows } = await pool.query(
-        `INSERT INTO "movement_type" (movement_type)
+        `INSERT INTO "movement_type" (movement_type )
         VALUES ($1) 
         RETURNING *`,
         [movement_type]
@@ -150,14 +162,14 @@ const stock_movementsGET = () => new Promise(
 * movementUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const stock_movementsMovement_idDELETE = ({ movementUnderscoreid }) => new Promise(
+const stock_movementsMovement_idDELETE = ( movement_id ) => new Promise(
   async (resolve, reject) => {
     try {
        const { rows } = await pool.query(
         `DELETE FROM "stock_movements" 
         WHERE movement_id = $1 
         RETURNING *`,
-        [movementUnderscoreid]
+        [movement_id]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -174,19 +186,22 @@ const stock_movementsMovement_idDELETE = ({ movementUnderscoreid }) => new Promi
 * movementUnderscoreid Integer 
 * returns StockMovement
 * */
-const stock_movementsMovement_idGET = ({ movementUnderscoreid }) => new Promise(
+const stock_movementsMovement_idGET = ( movement_id ) => new Promise(
   async (resolve, reject) => {
     try {
        const { rows } = await pool.query(
         `SELECT * FROM "stock_movements" 
         WHERE movement_id = $1`,
-        [movementUnderscoreid]
+        [movement_id]
       );
+        if (rows.length === 0) {
+        return reject(Service.rejectResponse('Movement not found', 404));
+      }
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+  e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -198,17 +213,19 @@ const stock_movementsMovement_idGET = ({ movementUnderscoreid }) => new Promise(
 * stockMovementUpdate StockMovementUpdate 
 * returns StockMovement
 * */
-const stock_movementsMovement_idPUT = ({ movementUnderscoreid, stockMovementUpdate }) => new Promise(
+const stock_movementsMovement_idPUT = ( movement_id, updateData ) => new Promise(
   async (resolve, reject) => {
     try {
-      const { movement_id } = movementUnderscoreid;
+    if (typeof movement_id !== 'number' || isNaN(movement_id)) {
+        return reject(Service.rejectResponse('Invalid movement ID', 400));
+      }
       const { 
         quantity, 
         movement_type, 
         cost, 
         comments, 
         movement_type_id 
-      } = stockMovementUpdate.body;
+      } = updateData;
 
       const { rows } = await pool.query(
         `UPDATE "stock_movements" 
@@ -222,11 +239,16 @@ const stock_movementsMovement_idPUT = ({ movementUnderscoreid, stockMovementUpda
         RETURNING *`,
         [quantity, movement_type, cost, comments, movement_type_id, movement_id]
       );
+
+ if (rows.length === 0) {
+        return reject(Service.rejectResponse('Movement not found', 404));
+      }
+
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+       e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -237,7 +259,7 @@ const stock_movementsMovement_idPUT = ({ movementUnderscoreid, stockMovementUpda
 * stockMovementCreate StockMovementCreate 
 * returns StockMovement
 * */
-const stock_movementsPOST = ({ stockMovementCreate }) => new Promise(
+const stock_movementsPOST = ( stockMovementCreate ) => new Promise(
   async (resolve, reject) => {
     try {
       const { 

@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 const Service = require('./Service');
-
+const pool = require('../db');
 /**
 * Get all inventory items
 *
@@ -35,14 +35,14 @@ const inventoryGET = () => new Promise(
 * inventoryUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const inventoryInventory_idDELETE = ({ inventoryUnderscoreid }) => new Promise(
+const inventoryInventory_idDELETE = ( inventory_id ) => new Promise(
   async (resolve, reject) => {
     try {
        const { rows } = await pool.query(
         `DELETE FROM "inventory" 
         WHERE inventory_id = $1 
         RETURNING *`,
-        [inventoryUnderscoreid]
+        [inventory_id]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -59,19 +59,24 @@ const inventoryInventory_idDELETE = ({ inventoryUnderscoreid }) => new Promise(
 * inventoryUnderscoreid Integer 
 * returns Inventory
 * */
-const inventoryInventory_idGET = ({ inventoryUnderscoreid }) => new Promise(
+const inventoryInventory_idGET = ( inventory_id ) => new Promise(
   async (resolve, reject) => {
     try {
       const { rows } = await pool.query(
         `SELECT * FROM "inventory" 
         WHERE inventory_id = $1`,
-        [inventoryUnderscoreid]
+        [inventory_id]
       );
-      resolve(Service.successResponse(rows[0]));
+
+if (rows.length === 0) {
+        return reject(Service.rejectResponse('Inventory not found', 404));
+      }
+
+      resolve(rows[0]);
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+       e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -83,16 +88,20 @@ const inventoryInventory_idGET = ({ inventoryUnderscoreid }) => new Promise(
 * inventoryUpdate InventoryUpdate 
 * returns Inventory
 * */
-const inventoryInventory_idPUT = ({ inventoryUnderscoreid, inventoryUpdate }) => new Promise(
+const inventoryInventory_idPUT = ( inventory_id, updateData ) => new Promise(
   async (resolve, reject) => {
     try {
-      const { inventory_id } = inventoryUnderscoreid;
+
+
+       if (typeof inventory_id !== 'number' || isNaN(inventory_id)) {
+        return reject(Service.rejectResponse('Invalid inventory ID', 400));
+      }
       const { 
         quantity, 
         reserved_quantity, 
         storage_location, 
         batch_number 
-      } = inventoryUpdate.body;
+      } = updateData;
 
       const { rows } = await pool.query(
         `UPDATE "inventory" 
@@ -106,11 +115,16 @@ const inventoryInventory_idPUT = ({ inventoryUnderscoreid, inventoryUpdate }) =>
         RETURNING *`,
         [quantity, reserved_quantity, storage_location, batch_number, inventory_id]
       );
+
+ if (rows.length === 0) {
+        return reject(Service.rejectResponse('Inventory not found', 404));
+      }
+
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -121,7 +135,7 @@ const inventoryInventory_idPUT = ({ inventoryUnderscoreid, inventoryUpdate }) =>
 * inventoryCreate InventoryCreate 
 * returns Inventory
 * */
-const inventoryPOST = ({ inventoryCreate }) => new Promise(
+const inventoryPOST = ( inventoryCreate ) => new Promise(
   async (resolve, reject) => {
     try {
       const { 

@@ -17,15 +17,52 @@ const salesPOST = async (request, response) => {
 };
 
 const salesRecord_idDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.salesRecord_idDELETE);
+  const record_id = Number(request.params.record_id);
+    
+    if (isNaN(record_id)) {
+      return response.status(400).json({ error: "Invalid sale ID" });
+    }
+  
+    try {
+      const result = await service.salesRecord_idDELETE(record_id);
+      
+      response.status(204).end();
+    } catch (e) {
+      response.status(e.status || 500).json({ 
+        error: e.message || 'Internal server error' 
+      });
+    }
 };
 
 const salesRecord_idGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.salesRecord_idGET);
+  const record_id = Number(request.params.record_id);
+    
+    if (isNaN(record_id)) {
+      return response.status(400).json({ error: "Invalid sale ID" });
+    }
+  
+    try {
+      const saleData = await service.salesRecord_idGET(record_id);
+      response.status(200).json(saleData);  
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 const salesRecord_idPUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.salesRecord_idPUT);
+   try {
+      const record_id = Number(request.params.record_id);
+      if (isNaN(record_id)) {
+        return response.status(400).json({ error: "Invalid sale ID" });
+      }
+  
+      const updateData = request.body;
+  
+      const result = await service.salesRecord_idPUT(record_id, updateData);
+      response.status(200).json(result.data);
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 

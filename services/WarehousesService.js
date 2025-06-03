@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 const Service = require('./Service');
-
+const pool = require('../db');
 /**
 * Get all warehouses
 *
@@ -25,7 +25,7 @@ const warehousesGET = () => new Promise(
 * warehouseCreate WarehouseCreate 
 * returns Warehouse
 * */
-const warehousesPOST = ({ warehouseCreate }) => new Promise(
+const warehousesPOST = ( warehouseCreate ) => new Promise(
   async (resolve, reject) => {
     try {
       const {
@@ -59,14 +59,14 @@ const warehousesPOST = ({ warehouseCreate }) => new Promise(
 * warehouseUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const warehousesWarehouse_idDELETE = ({ warehouseUnderscoreid }) => new Promise(
+const warehousesWarehouse_idDELETE = ( warehouse_id ) => new Promise(
   async (resolve, reject) => {
     try {
       const { rows } = await pool.query(
         `DELETE FROM "warehouse" 
         WHERE warehouse_id = $1 
         RETURNING *`,
-        [warehouseUnderscoreid]
+        [warehouse_id]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -83,18 +83,23 @@ const warehousesWarehouse_idDELETE = ({ warehouseUnderscoreid }) => new Promise(
 * warehouseUnderscoreid Integer 
 * returns Warehouse
 * */
-const warehousesWarehouse_idGET = ({ warehouseUnderscoreid }) => new Promise(
+const warehousesWarehouse_idGET = ( warehouse_id) => new Promise(
   async (resolve, reject) => {
     try {
        const { rows } = await pool.query(
         `SELECT * FROM "warehouse" 
         WHERE warehouse_id = $1`,
-        [warehouseUnderscoreid]
+        [warehouse_id]
       );
-      resolve(Service.successResponse(rows[0]));
+
+      if (rows.length === 0) {
+        return reject(Service.rejectResponse('Warehouse not found', 404));
+      }
+
+      resolve(rows[0]);
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
+        e.message || 'Database error',
         e.status || 405,
       ));
     }
@@ -107,17 +112,21 @@ const warehousesWarehouse_idGET = ({ warehouseUnderscoreid }) => new Promise(
 * warehouseUpdate WarehouseUpdate 
 * returns Warehouse
 * */
-const warehousesWarehouse_idPUT = ({ warehouseUnderscoreid, warehouseUpdate }) => new Promise(
+const warehousesWarehouse_idPUT = ( warehouse_id, updateData ) => new Promise(
   async (resolve, reject) => {
     try {
-      const { warehouse_id } = warehouseUnderscoreid;
+      // Проверка типа ID
+      if (typeof warehouse_id !== 'number' || isNaN(warehouse_id)) {
+        return reject(Service.rejectResponse('Invalid warehouse ID', 400));
+      }
+      
       const {
         name,
         address,
         total_capacity,
         current_utilization,
         status
-      } = warehouseUpdate.body;
+      } = updateData;
 
       const { rows } = await pool.query(
         `UPDATE "warehouse" 
@@ -133,10 +142,14 @@ const warehousesWarehouse_idPUT = ({ warehouseUnderscoreid, warehouseUpdate }) =
         [name, address, total_capacity, 
          current_utilization, status, warehouse_id]
       );
+
+      if (rows.length === 0) {
+        return reject(Service.rejectResponse('Warehouse not found', 404));
+      }
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
+        e.message || 'Database error',
         e.status || 405,
       ));
     }

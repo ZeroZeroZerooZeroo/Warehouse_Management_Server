@@ -17,15 +17,54 @@ const warehousesPOST = async (request, response) => {
 };
 
 const warehousesWarehouse_idDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.warehousesWarehouse_idDELETE);
+  const warehouses_id = Number(request.params.warehouse_id);
+    
+    if (isNaN(warehouses_id)) {
+      return response.status(400).json({ error: "Invalid warehouses ID" });
+    }
+  
+    try {
+      const result = await service.warehousesWarehouse_idDELETE(warehouses_id);
+      
+      response.status(204).end();
+    } catch (e) {
+      response.status(e.status || 500).json({ 
+        error: e.message || 'Internal server error' 
+      });
+    }
 };
 
 const warehousesWarehouse_idGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.warehousesWarehouse_idGET);
+  const warehouses_id = Number(request.params.warehouse_id);
+    
+    if (isNaN(warehouses_id)) {
+      return response.status(400).json({ error: "Invalid warehouses ID" });
+    }
+  
+    try {
+      const warehousesData = await service.warehousesWarehouse_idGET(warehouses_id);
+      response.status(200).json(warehousesData);  
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
+  
 };
 
 const warehousesWarehouse_idPUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.warehousesWarehouse_idPUT);
+  try {
+      const warehouses_id = Number(request.params.warehouse_id);
+      if (isNaN(warehouses_id)) {
+        return response.status(400).json({ error: "Invalid warehouses ID" });
+      }
+  
+      const updateData = request.body;
+  
+      const result = await service.warehousesWarehouse_idPUT(warehouses_id, updateData);
+      response.status(200).json(result.data);
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
+  
 };
 
 

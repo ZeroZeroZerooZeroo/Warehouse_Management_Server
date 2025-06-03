@@ -17,15 +17,54 @@ const suppliersPOST = async (request, response) => {
 };
 
 const suppliersSupplier_idDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.suppliersSupplier_idDELETE);
+  
+  const supplier_id = Number(request.params.supplier_id);
+    
+    if (isNaN(supplier_id)) {
+      return response.status(400).json({ error: "Invalid supplier ID" });
+    }
+  
+    try {
+      const result = await service.suppliersSupplier_idDELETE(supplier_id);
+      
+      response.status(204).end();
+    } catch (e) {
+      response.status(e.status || 500).json({ 
+        error: e.message || 'Internal server error' 
+      });
+    }
 };
 
 const suppliersSupplier_idGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.suppliersSupplier_idGET);
+   const supplier_id = Number(request.params.supplier_id);
+    
+    if (isNaN(supplier_id)) {
+      return response.status(400).json({ error: "Invalid supplier ID" });
+    }
+  
+    try {
+      const supplierData = await service.suppliersSupplier_idGET(supplier_id);
+      response.status(200).json(supplierData);  
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 const suppliersSupplier_idPUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.suppliersSupplier_idPUT);
+ 
+   try {
+      const supplier_id = Number(request.params.supplier_id);
+      if (isNaN(supplier_id)) {
+        return response.status(400).json({ error: "Invalid supplier ID" });
+      }
+  
+      const updateData = request.body;
+  
+      const result = await service.suppliersSupplier_idPUT(supplier_id, updateData);
+      response.status(200).json(result.data);
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 

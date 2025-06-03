@@ -9,15 +9,52 @@
 const Controller = require('./Controller');
 const service = require('../services/DocumentsService');
 const document_statusesDocument_status_idDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.document_statusesDocument_status_idDELETE);
+   const document_status_id = Number(request.params.document_status_id);
+    
+    if (isNaN(document_status_id)) {
+      return response.status(400).json({ error: "Invalid document status ID" });
+    }
+  
+    try {
+      const result = await service.document_statusesDocument_status_idDELETE(document_status_id);
+      
+      response.status(204).end();
+    } catch (e) {
+      response.status(e.status || 500).json({ 
+        error: e.message || 'Internal server error' 
+      });
+    }
 };
 
 const document_statusesDocument_status_idGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.document_statusesDocument_status_idGET);
+    const document_status_id = Number(request.params.document_status_id);
+    
+    if (isNaN(document_status_id)) {
+      return response.status(400).json({ error: "Invalid document status ID" });
+    }
+  
+    try {
+      const documentstatusData = await service.document_statusesDocument_status_idGET(document_status_id);
+      response.status(200).json(documentstatusData);  
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 const document_statusesDocument_status_idPUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.document_statusesDocument_status_idPUT);
+   try {
+      const document_status_id = Number(request.params.document_status_id);
+      if (isNaN(document_status_id)) {
+        return response.status(400).json({ error: "Invalid document status ID" });
+      }
+  
+      const updateData = request.body;
+  
+      const result = await service.document_statusesDocument_status_idPUT(document_status_id, updateData);
+      response.status(200).json(result.data);
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 const document_statusesGET = async (request, response) => {
@@ -28,6 +65,8 @@ const document_statusesPOST = async (request, response) => {
   await Controller.handleRequest(request, response, service.document_statusesPOST);
 };
 
+
+
 const document_typesGET = async (request, response) => {
   await Controller.handleRequest(request, response, service.document_typesGET);
 };
@@ -37,47 +76,190 @@ const document_typesPOST = async (request, response) => {
 };
 
 const document_typesType_idDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.document_typesType_idDELETE);
+    const type_id = Number(request.params.type_id);
+    
+    if (isNaN(type_id)) {
+      return response.status(400).json({ error: "Invalid document types ID" });
+    }
+  
+    try {
+      const result = await service.document_typesType_idDELETE(type_id);
+      
+      response.status(204).end();
+    } catch (e) {
+      response.status(e.status || 500).json({ 
+        error: e.message || 'Internal server error' 
+      });
+    }
 };
 
 const document_typesType_idGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.document_typesType_idGET);
+  const type_id = Number(request.params.type_id);
+    
+    if (isNaN(type_id)) {
+      return response.status(400).json({ error: "Invalid document types ID" });
+    }
+  
+    try {
+      const typesData = await service.document_typesType_idGET(type_id);
+      response.status(200).json(typesData);  
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 const document_typesType_idPUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.document_typesType_idPUT);
+  try {
+     const type_id = Number(request.params.type_id);
+     if (isNaN(type_id)) {
+       return response.status(400).json({ error: "Invalid document types ID" });
+     }
+ 
+     const updateData = request.body;
+ 
+     const result = await service.document_typesType_idPUT(type_id, updateData);
+     response.status(200).json(result.data);
+   } catch (e) {
+     response.status(e.status || 500).json({ error: e.message });
+   }
 };
 
 const documentsDocument_idDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.documentsDocument_idDELETE);
+   const document_id = Number(request.params.document_id);
+    
+    if (isNaN(document_id)) {
+      return response.status(400).json({ error: "Invalid document ID" });
+    }
+  
+    try {
+      const result = await service.documentsDocument_idDELETE(document_id);
+      
+      response.status(204).end();
+    } catch (e) {
+      response.status(e.status || 500).json({ 
+        error: e.message || 'Internal server error' 
+      });
+    }
 };
 
 const documentsDocument_idGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.documentsDocument_idGET);
+   const document_id = Number(request.params.document_id);
+    
+    if (isNaN(document_id)) {
+      return response.status(400).json({ error: "Invalid document ID" });
+    }
+  
+    try {
+      const documentData = await service.documentsDocument_idGET(document_id);
+      response.status(200).json(documentData);  
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 const documentsDocument_idItemsGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.documentsDocument_idItemsGET);
+  const document_id = Number(request.params.document_id);
+    
+    if (isNaN(document_id)) {
+      return response.status(400).json({ error: "Invalid document ID" });
+    }
+  
+    try {
+      const documentData = await service.documentsDocument_idItemsGET(document_id);
+      response.status(200).json(documentData);  
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
+   
+
 };
 
 const documentsDocument_idItemsItem_idDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.documentsDocument_idItemsItem_idDELETE);
+   const document_id = Number(request.params.document_id);
+  const item_id = Number(request.params.item_id);
+
+  if (isNaN(document_id) || isNaN(item_id)) {
+    return response.status(400).json({ error: "Invalid document ID or item ID" });
+  }
+
+  try {
+    await service.documentsDocument_idItemsItem_idDELETE(document_id, item_id);
+    response.status(204).end();
+  } catch (e) {
+      response.status(e.status || 500).json({ 
+        error: e.message || 'Internal server error' 
+      });
+  }
+    
+   
 };
 
 const documentsDocument_idItemsItem_idGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.documentsDocument_idItemsItem_idGET);
+      const document_id = Number(request.params.document_id);
+      const item_id = Number(request.params.item_id);
+      
+       if (isNaN(document_id) || isNaN(item_id)) {
+    return response.status(400).json({ error: "Invalid document ID or item ID" });
+  }
+    
+      try {
+        const documentItemData = await service.documentsDocument_idItemsItem_idGET(document_id, item_id);
+        response.status(200).json(documentItemData);  
+      } catch (e) {
+        response.status(e.status || 500).json({ error: e.message });
+      }
+
 };
 
 const documentsDocument_idItemsItem_idPUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.documentsDocument_idItemsItem_idPUT);
+   try {
+        const document_id = Number(request.params.document_id);
+      const item_id = Number(request.params.item_id);
+       if (isNaN(document_id) || isNaN(item_id)) {
+    return response.status(400).json({ error: "Invalid document ID or item ID" });
+  }
+  
+      const updateData = request.body;
+  
+      const result = await service.documentsDocument_idItemsItem_idPUT(document_id, item_id, updateData);
+      response.status(200).json(result.data);
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 const documentsDocument_idItemsPOST = async (request, response) => {
-  await Controller.handleRequest(request, response, service.documentsDocument_idItemsPOST);
+  const document_id = Number(request.params.document_id);
+    
+    if (isNaN(document_id)) {
+      return response.status(400).json({ error: "Invalid document ID" });
+    }
+  
+    try {
+      const result = await service.documentsDocument_idItemsPOST(
+        document_id, 
+        request.body  
+      );
+      response.status(201).json(result);
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 const documentsDocument_idPUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.documentsDocument_idPUT);
+ try {
+     const document_id = Number(request.params.document_id);
+     if (isNaN(document_id)) {
+       return response.status(400).json({ error: "Invalid document ID" });
+     }
+ 
+     const updateData = request.body;
+ 
+     const result = await service.documentsDocument_idPUT(document_id, updateData);
+     response.status(200).json(result.data);
+   } catch (e) {
+     response.status(e.status || 500).json({ error: e.message });
+   }
 };
 
 const documentsGET = async (request, response) => {

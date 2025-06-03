@@ -13,15 +13,52 @@ const inventoryGET = async (request, response) => {
 };
 
 const inventoryInventory_idDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.inventoryInventory_idDELETE);
+   const inventory_id = Number(request.params.inventory_id);
+    
+    if (isNaN(inventory_id)) {
+      return response.status(400).json({ error: "Invalid inventory ID" });
+    }
+  
+    try {
+      const result = await service.inventoryInventory_idDELETE(inventory_id);
+      
+      response.status(204).end();
+    } catch (e) {
+      response.status(e.status || 500).json({ 
+        error: e.message || 'Internal server error' 
+      });
+    }
 };
 
 const inventoryInventory_idGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.inventoryInventory_idGET);
+  const inventory_id = Number(request.params.inventory_id);
+   
+   if (isNaN(inventory_id)) {
+     return response.status(400).json({ error: "Invalid inventory ID" });
+   }
+ 
+   try {
+     const inventoryData = await service.inventoryInventory_idGET(inventory_id);
+     response.status(200).json(inventoryData);  
+   } catch (e) {
+     response.status(e.status || 500).json({ error: e.message });
+   }
 };
 
 const inventoryInventory_idPUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.inventoryInventory_idPUT);
+   try {
+      const inventory_id = Number(request.params.inventory_id);
+      if (isNaN(inventory_id)) {
+        return response.status(400).json({ error: "Invalid inventory ID" });
+      }
+  
+      const updateData = request.body;
+  
+      const result = await service.inventoryInventory_idPUT(inventory_id, updateData);
+      response.status(200).json(result.data);
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 const inventoryPOST = async (request, response) => {

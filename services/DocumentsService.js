@@ -1,20 +1,20 @@
 /* eslint-disable no-unused-vars */
 const Service = require('./Service');
-
+const pool = require('../db');
 /**
 * Delete document status
 *
 * documentUnderscorestatusUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const document_statusesDocument_status_idDELETE = ({ documentUnderscorestatusUnderscoreid }) => new Promise(
+const document_statusesDocument_status_idDELETE = ( document_status_id ) => new Promise(
   async (resolve, reject) => {
     try {
       const { rows } = await pool.query(
         `DELETE FROM "document_status" 
         WHERE document_status_id = $1 
         RETURNING *`,
-        [documentUnderscorestatusUnderscoreid]
+        [document_status_id]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -31,19 +31,24 @@ const document_statusesDocument_status_idDELETE = ({ documentUnderscorestatusUnd
 * documentUnderscorestatusUnderscoreid Integer 
 * returns DocumentStatus
 * */
-const document_statusesDocument_status_idGET = ({ documentUnderscorestatusUnderscoreid }) => new Promise(
+const document_statusesDocument_status_idGET = ( document_status_id ) => new Promise(
   async (resolve, reject) => {
     try {
        const { rows } = await pool.query(
         `SELECT * FROM "document_status" 
         WHERE document_status_id = $1`,
-        [documentUnderscorestatusUnderscoreid]
+        [document_status_id]
       );
-      resolve(Service.successResponse(rows[0]));
+
+if (rows.length === 0) {
+        return reject(Service.rejectResponse('Document status not found', 404));
+      }
+
+      resolve(rows[0]);
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+       e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -55,24 +60,31 @@ const document_statusesDocument_status_idGET = ({ documentUnderscorestatusUnders
 * documentStatusUpdate DocumentStatusUpdate 
 * returns DocumentStatus
 * */
-const document_statusesDocument_status_idPUT = ({ documentUnderscorestatusUnderscoreid, documentStatusUpdate }) => new Promise(
+const document_statusesDocument_status_idPUT = ( document_status_id, updateData ) => new Promise(
   async (resolve, reject) => {
     try {
-     const { document_status_id } = documentUnderscorestatusUnderscoreid;
-      const { new_status_name } = documentStatusUpdate.body;
+      if (typeof document_status_id !== 'number' || isNaN(document_status_id)) {
+        return reject(Service.rejectResponse('Invalid document status ID', 400));
+      }
+
+      const { status_name } = updateData;
 
       const { rows } = await pool.query(
         `UPDATE "document_status" 
         SET status_name = $1 
         WHERE document_status_id = $2 
         RETURNING *`,
-        [new_status_name, document_status_id]
+        [status_name, document_status_id]
       );
+
+       if (rows.length === 0) {
+        return reject(Service.rejectResponse('Document status not found', 404));
+      }
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -101,15 +113,15 @@ const document_statusesGET = () => new Promise(
 * documentStatusCreate DocumentStatusCreate 
 * returns DocumentStatus
 * */
-const document_statusesPOST = ({ documentStatusCreate }) => new Promise(
+const document_statusesPOST = ( documentStatusCreate ) => new Promise(
   async (resolve, reject) => {
     try {
        const { document_status_id, status_name } = documentStatusCreate.body;
       const { rows } = await pool.query(
-        `INSERT INTO "document_status" (document_status_id, status_name)
-        VALUES ($1, $2) 
+        `INSERT INTO "document_status" (status_name)
+        VALUES ($1) 
         RETURNING *`,
-        [document_status_id, status_name]
+        [status_name]
       );
       resolve(Service.successResponse(rows[0], 201));
     } catch (e) {
@@ -144,7 +156,7 @@ const document_typesGET = () => new Promise(
 * documentTypeCreate DocumentTypeCreate 
 * returns DocumentType
 * */
-const document_typesPOST = ({ documentTypeCreate }) => new Promise(
+const document_typesPOST = ( documentTypeCreate ) => new Promise(
   async (resolve, reject) => {
     try {
       const { name, prefix, requires_approval, direction } = documentTypeCreate.body;
@@ -169,14 +181,14 @@ const document_typesPOST = ({ documentTypeCreate }) => new Promise(
 * typeUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const document_typesType_idDELETE = ({ typeUnderscoreid }) => new Promise(
+const document_typesType_idDELETE = ( type_id ) => new Promise(
   async (resolve, reject) => {
     try {
        const { rows } = await pool.query(
         `DELETE FROM "document_types" 
         WHERE type_id = $1 
         RETURNING *`,
-        [typeUnderscoreid]
+        [type_id]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -193,19 +205,24 @@ const document_typesType_idDELETE = ({ typeUnderscoreid }) => new Promise(
 * typeUnderscoreid Integer 
 * returns DocumentType
 * */
-const document_typesType_idGET = ({ typeUnderscoreid }) => new Promise(
+const document_typesType_idGET = ( type_id ) => new Promise(
   async (resolve, reject) => {
     try {
        const { rows } = await pool.query(
         `SELECT * FROM "document_types" 
         WHERE type_id = $1`,
-        [typeUnderscoreid]
+        [type_id]
       );
-      resolve(Service.successResponse(rows[0]));
+
+if (rows.length === 0) {
+        return reject(Service.rejectResponse('Type id not found', 404));
+      }
+
+      resolve(rows[0]);
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+ e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -217,11 +234,13 @@ const document_typesType_idGET = ({ typeUnderscoreid }) => new Promise(
 * documentTypeUpdate DocumentTypeUpdate 
 * returns DocumentType
 * */
-const document_typesType_idPUT = ({ typeUnderscoreid, documentTypeUpdate }) => new Promise(
+const document_typesType_idPUT = ( type_id, updateData ) => new Promise(
   async (resolve, reject) => {
     try {
-       const { type_id } = typeUnderscoreid;
-      const { name, prefix, requires_approval, direction } = documentTypeUpdate.body;
+if (typeof type_id !== 'number' || isNaN(type_id)) {
+        return reject(Service.rejectResponse('Invalid type ID', 400));
+      }
+      const { name, prefix, requires_approval, direction } = updateData;
 
       const { rows } = await pool.query(
         `UPDATE "document_types" 
@@ -234,11 +253,15 @@ const document_typesType_idPUT = ({ typeUnderscoreid, documentTypeUpdate }) => n
         RETURNING *`,
         [name, prefix, requires_approval, direction, type_id]
       );
+
+      if (rows.length === 0) {
+        return reject(Service.rejectResponse('Type not found', 404));
+      }
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -249,14 +272,14 @@ const document_typesType_idPUT = ({ typeUnderscoreid, documentTypeUpdate }) => n
 * documentUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const documentsDocument_idDELETE = ({ documentUnderscoreid }) => new Promise(
+const documentsDocument_idDELETE = ( document_id ) => new Promise(
   async (resolve, reject) => {
     try {
       const { rows } = await pool.query(
         `DELETE FROM "document" 
         WHERE document_id = $1 
         RETURNING *`,
-        [documentUnderscoreid]
+        [document_id]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -273,19 +296,23 @@ const documentsDocument_idDELETE = ({ documentUnderscoreid }) => new Promise(
 * documentUnderscoreid Integer 
 * returns Document
 * */
-const documentsDocument_idGET = ({ documentUnderscoreid }) => new Promise(
+const documentsDocument_idGET = ( document_id ) => new Promise(
   async (resolve, reject) => {
     try {
       const { rows } = await pool.query(
         `SELECT * FROM "document" 
         WHERE document_id = $1`,
-        [documentUnderscoreid]
+        [document_id]
       );
-      resolve(Service.successResponse(rows[0]));
+
+      if (rows.length === 0) {
+        return reject(Service.rejectResponse('Document not found', 404));
+      }
+      resolve(rows[0]);
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+       e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -296,22 +323,36 @@ const documentsDocument_idGET = ({ documentUnderscoreid }) => new Promise(
 * documentUnderscoreid Integer 
 * returns List
 * */
-const documentsDocument_idItemsGET = ({ documentUnderscoreid }) => new Promise(
+const documentsDocument_idItemsGET = (document_id) => new Promise(
   async (resolve, reject) => {
     try {
-      const { rows } = await pool.query(
-        `SELECT * FROM "document_item" 
-        WHERE item_id IN (
-          SELECT item_id FROM "document" 
-          WHERE document_id = $1
-        )`,
-        [documentUnderscoreid]
+      // Проверяем существование документа
+      const docCheck = await pool.query(
+        `SELECT 1 FROM document WHERE document_id = $1`,
+        [document_id]
       );
+      
+      if (docCheck.rowCount === 0) {
+        return reject(Service.rejectResponse('Document not found', 404));
+      }
+
+      // Получаем элементы документа через связь с document_item
+      const { rows } = await pool.query(
+        `SELECT di.* FROM document_item di
+         JOIN document d ON di.item_id = d.item_id
+         WHERE d.document_id = $1`,
+        [document_id]
+      );
+      
+      if (rows.length === 0) {
+        return reject(Service.rejectResponse('No items found for this document', 404));
+      }
+      
       resolve(Service.successResponse(rows));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -323,21 +364,43 @@ const documentsDocument_idItemsGET = ({ documentUnderscoreid }) => new Promise(
 * itemUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const documentsDocument_idItemsItem_idDELETE = ({ documentUnderscoreid, itemUnderscoreid }) => new Promise(
+const documentsDocument_idItemsItem_idDELETE = (document_id, item_id) => new Promise(
   async (resolve, reject) => {
     try {
-      const { rows } = await pool.query(
-       `DELETE FROM "document_item" 
-        WHERE item_id = $1 
-        AND document_id = $2 
-        RETURNING *`,
-        [itemUnderscoreid, documentUnderscoreid]
+      // Проверяем существование связи между документом и элементом
+      const check = await pool.query(
+        `SELECT 1 FROM document 
+         WHERE document_id = $1 AND item_id = $2`,
+        [document_id, item_id]
       );
-      resolve(Service.successResponse(rows[0]));
+      
+      if (check.rowCount === 0) {
+        return reject(Service.rejectResponse('Document item not found', 404));
+      }
+
+      // Удаляем элемент из document_item
+      const { rowCount } = await pool.query(
+        `DELETE FROM document_item 
+         WHERE item_id = $1`,
+        [item_id]
+      );
+      
+      if (rowCount === 0) {
+        return reject(Service.rejectResponse('Item not found', 404));
+      }
+      
+      // Обновляем документ, удаляя ссылку на элемент
+      await pool.query(
+        `UPDATE document SET item_id = NULL 
+         WHERE document_id = $1 AND item_id = $2`,
+        [document_id, item_id]
+      );
+      
+      resolve(Service.successResponse({ message: 'Item deleted' }));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -349,24 +412,29 @@ const documentsDocument_idItemsItem_idDELETE = ({ documentUnderscoreid, itemUnde
 * itemUnderscoreid Integer 
 * returns DocumentItem
 * */
-const documentsDocument_idItemsItem_idGET = ({ documentUnderscoreid, itemUnderscoreid }) => new Promise(
+const documentsDocument_idItemsItem_idGET = (document_id, item_id) => new Promise(
   async (resolve, reject) => {
     try {
-        const { rows } = await pool.query(
-        `SELECT * FROM "document_item" 
-        WHERE item_id = $1
-        AND document_id = $2 `,
-         [itemUnderscoreid, documentUnderscoreid]
+      const { rows } = await pool.query(
+        `SELECT * FROM document_item 
+         WHERE item_id = $1 AND document_id = $2`,
+        [item_id, document_id]
       );
-      resolve(Service.successResponse(rows[0]));
+      
+      if (rows.length === 0) {
+        return reject(Service.rejectResponse('Document item not found', 404));
+      }
+      
+      resolve(rows[0]);
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
 );
+
 /**
 * Update document item
 *
@@ -375,38 +443,43 @@ const documentsDocument_idItemsItem_idGET = ({ documentUnderscoreid, itemUndersc
 * documentItemUpdate DocumentItemUpdate 
 * returns DocumentItem
 * */
-const documentsDocument_idItemsItem_idPUT = ({ documentUnderscoreid, itemUnderscoreid, documentItemUpdate }) => new Promise(
+const documentsDocument_idItemsItem_idPUT = (document_id, item_id, updateData) => new Promise(
   async (resolve, reject) => {
     try {
-      const { item_id } = itemUnderscoreid;
-      const {document_id} = documentUnderscoreid;
-      const {
-        quantity,
-        price,
-        amount,
-        tax_rate,
-        discount
-      } = documentItemUpdate.body;
+      // Проверяем существование связи между документом и элементом
+      const check = await pool.query(
+        `SELECT 1 FROM document 
+         WHERE document_id = $1 AND item_id = $2`,
+        [document_id, item_id]
+      );
+      
+      if (check.rowCount === 0) {
+        return reject(Service.rejectResponse('Document item not found', 404));
+      }
 
+      const { quantity, price, amount, tax_rate, discount } = updateData;
+      
       const { rows } = await pool.query(
-        `UPDATE "document_item" 
-        SET 
+        `UPDATE document_item SET
           quantity = $1,
           price = $2,
           amount = $3,
           tax_rate = $4,
           discount = $5
-        WHERE item_id = $6
-        AND document_id = $7
-        RETURNING *`,
-        [quantity, price, amount, tax_rate, discount, item_id, document_id]
+         WHERE item_id = $6
+         RETURNING *`,
+        [quantity, price, amount, tax_rate, discount, item_id]
       );
-
+      
+      if (rows.length === 0) {
+        return reject(Service.rejectResponse('Item not found', 404));
+      }
+      
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -418,36 +491,55 @@ const documentsDocument_idItemsItem_idPUT = ({ documentUnderscoreid, itemUndersc
 * documentItemCreate DocumentItemCreate 
 * returns DocumentItem
 * */
-const documentsDocument_idItemsPOST = ({ documentUnderscoreid, documentItemCreate }) => new Promise(
+const documentsDocument_idItemsPOST = (document_id, documentItemCreate) => new Promise(
   async (resolve, reject) => {
     try {
-      const { document_id } = documentUnderscoreid;
-      const {
-        quantity,
-        price,
-        amount,
-        tax_rate,
-        discount
-      } = documentItemCreate.body;
-
-      const { rows } = await pool.query(
-        `WITH doc_item AS (
-          INSERT INTO "document_item" (
-            quantity, price, amount, tax_rate, discount
-          ) VALUES ($1, $2, $3, $4, $5)
-          RETURNING item_id
-        )
-        UPDATE "document" 
-        SET item_id = (SELECT item_id FROM doc_item) 
-        WHERE document_id = $6 
-        RETURNING *`,
-        [quantity, price, amount, tax_rate, discount, document_id]
+      // Проверка существования документа
+      const docCheck = await pool.query(
+        `SELECT 1 FROM document WHERE document_id = $1`,
+        [document_id]
       );
-      resolve(Service.successResponse(rows[0], 201));
+      
+      if (docCheck.rowCount === 0) {
+        return reject(Service.rejectResponse('Document not found', 404));
+      }
+      
+      // Извлечение данных элемента
+      const { quantity, price, amount, tax_rate, discount } = documentItemCreate;
+      
+      // Начинаем транзакцию
+      await pool.query('BEGIN');
+      
+      try {
+        // Вставка элемента в document_item
+        const { rows } = await pool.query(
+          `INSERT INTO document_item 
+           (quantity, price, amount, tax_rate, discount) 
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING *`,
+          [quantity, price, amount, tax_rate, discount]
+        );
+        
+        // Связываем элемент с документом
+        await pool.query(
+          `UPDATE document SET item_id = $1
+           WHERE document_id = $2`,
+          [rows[0].item_id, document_id]
+        );
+        
+        // Фиксируем транзакцию
+        await pool.query('COMMIT');
+        
+        resolve(Service.successResponse(rows[0], 201));
+      } catch (e) {
+        // Откатываем транзакцию при ошибке
+        await pool.query('ROLLBACK');
+        throw e;
+      }
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -459,10 +551,12 @@ const documentsDocument_idItemsPOST = ({ documentUnderscoreid, documentItemCreat
 * documentUpdate DocumentUpdate 
 * returns Document
 * */
-const documentsDocument_idPUT = ({ documentUnderscoreid, documentUpdate }) => new Promise(
+const documentsDocument_idPUT = ( document_id, updateData ) => new Promise(
   async (resolve, reject) => {
     try {
-      const { document_id } = documentUnderscoreid;
+if (typeof document_id !== 'number' || isNaN(document_id)) {
+        return reject(Service.rejectResponse('Invalid document ID', 400));
+      }
       const {
         document_number,
         status,
@@ -470,7 +564,7 @@ const documentsDocument_idPUT = ({ documentUnderscoreid, documentUpdate }) => ne
         customer_id,
         type_id,
         document_status_id
-      } = documentUpdate.body;
+      } = updateData;
 
       const { rows } = await pool.query(
         `UPDATE "document" 
@@ -485,11 +579,15 @@ const documentsDocument_idPUT = ({ documentUnderscoreid, documentUpdate }) => ne
         RETURNING *`,
         [document_number, status, comments, customer_id, type_id, document_status_id, document_id]
       );
+
+       if (rows.length === 0) {
+        return reject(Service.rejectResponse('Document not found', 404));
+      }
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -526,7 +624,7 @@ const documentsGET = () => new Promise(
 * documentCreate DocumentCreate 
 * returns Document
 * */
-const documentsPOST = ({ documentCreate }) => new Promise(
+const documentsPOST = ( documentCreate ) => new Promise(
   async (resolve, reject) => {
     try {
        const {

@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 const Service = require('./Service');
+const pool = require('../db');
 
 /**
 * Delete product category
@@ -7,14 +8,14 @@ const Service = require('./Service');
 * categoryUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const product_categoriesCategory_idDELETE = ({ categoryUnderscoreid }) => new Promise(
+const product_categoriesCategory_idDELETE = ( category_id ) => new Promise(
   async (resolve, reject) => {
     try {
      const { rows } = await pool.query(
         `DELETE FROM "product_categorie" 
         WHERE category_id = $1 
         RETURNING *`,
-        [categoryUnderscoreid]
+        [category_id]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -31,19 +32,25 @@ const product_categoriesCategory_idDELETE = ({ categoryUnderscoreid }) => new Pr
 * categoryUnderscoreid Integer 
 * returns ProductCategory
 * */
-const product_categoriesCategory_idGET = ({ categoryUnderscoreid }) => new Promise(
+const product_categoriesCategory_idGET = ( category_id ) => new Promise(
   async (resolve, reject) => {
     try {
       const { rows } = await pool.query(
         `SELECT * FROM "product_categorie" 
         WHERE category_id = $1`,
-        [categoryUnderscoreid]
+        [category_id]
       );
+
+       if (rows.length === 0) {
+        return reject(Service.rejectResponse('Category not found', 404));
+      }
+      
+
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+           e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -55,11 +62,15 @@ const product_categoriesCategory_idGET = ({ categoryUnderscoreid }) => new Promi
 * productCategoryUpdate ProductCategoryUpdate 
 * returns ProductCategory
 * */
-const product_categoriesCategory_idPUT = ({ categoryUnderscoreid, productCategoryUpdate }) => new Promise(
+const product_categoriesCategory_idPUT = ( category_id, updateData ) => new Promise(
   async (resolve, reject) => {
     try {
-       const { category_id } = categoryUnderscoreid;
-      const { name, description } = productCategoryUpdate.body;
+
+if (typeof category_id !== 'number' || isNaN(category_id)) {
+        return reject(Service.rejectResponse('Invalid Category ID', 400));
+      }
+
+      const { name, description } = updateData;
       
       const { rows } = await pool.query(
         `UPDATE "product_categorie" 
@@ -70,11 +81,17 @@ const product_categoriesCategory_idPUT = ({ categoryUnderscoreid, productCategor
         RETURNING *`,
         [name, description, category_id]
       );
+
+
+if (rows.length === 0) {
+        return reject(Service.rejectResponse('Category not found', 404));
+      }
+      
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -103,10 +120,14 @@ const product_categoriesGET = () => new Promise(
 * productCategoryCreate ProductCategoryCreate 
 * returns ProductCategory
 * */
-const product_categoriesPOST = ({ productCategoryCreate }) => new Promise(
+const product_categoriesPOST = ( productCategoryCreate ) => new Promise(
   async (resolve, reject) => {
     try {
-      const { name, description } = productCategoryCreate.body;
+      const { 
+        name, 
+        description 
+      } = productCategoryCreate.body;
+
       const { rows } = await pool.query(
         `INSERT INTO "product_categorie" (name, description, created_at)
         VALUES ($1, $2, NOW())
@@ -122,6 +143,7 @@ const product_categoriesPOST = ({ productCategoryCreate }) => new Promise(
     }
   },
 );
+
 /**
 * Get all products
 *
@@ -153,7 +175,7 @@ const productsGET = () => new Promise(
 * productCreate ProductCreate 
 * returns Product
 * */
-const productsPOST = ({ productCreate }) => new Promise(
+const productsPOST = ( productCreate ) => new Promise(
   async (resolve, reject) => {
     try {
        const {
@@ -198,14 +220,14 @@ const productsPOST = ({ productCreate }) => new Promise(
 * productUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const productsProduct_idDELETE = ({ productUnderscoreid }) => new Promise(
+const productsProduct_idDELETE = ( product_id ) => new Promise(
   async (resolve, reject) => {
     try {
        const { rows } = await pool.query(
         `DELETE FROM "product" 
         WHERE product_id = $1 
         RETURNING *`,
-        [productUnderscoreid]
+        [product_id]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -222,7 +244,7 @@ const productsProduct_idDELETE = ({ productUnderscoreid }) => new Promise(
 * productUnderscoreid Integer 
 * returns Product
 * */
-const productsProduct_idGET = ({ productUnderscoreid }) => new Promise(
+const productsProduct_idGET = ( product_id ) => new Promise(
   async (resolve, reject) => {
     try {
        const { rows } = await pool.query(
@@ -233,13 +255,17 @@ const productsProduct_idGET = ({ productUnderscoreid }) => new Promise(
         LEFT JOIN "product_categorie" pc 
           ON p.category_id = pc.category_id
         WHERE p.product_id = $1`,
-        [productUnderscoreid]
+        [product_id]
       );
+ if (rows.length === 0) {
+        return reject(Service.rejectResponse('Product not found', 404));
+      }
+
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+       e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -251,10 +277,14 @@ const productsProduct_idGET = ({ productUnderscoreid }) => new Promise(
 * productUpdate ProductUpdate 
 * returns Product
 * */
-const productsProduct_idPUT = ({ productUnderscoreid, productUpdate }) => new Promise(
+const productsProduct_idPUT = ( product_id, updateData ) => new Promise(
   async (resolve, reject) => {
     try {
-      const { product_id } = productUnderscoreid;
+
+if (typeof product_id !== 'number' || isNaN(product_id)) {
+        return reject(Service.rejectResponse('Product customer ID', 400));
+      }
+
       const {
         sku,
         name,
@@ -268,7 +298,7 @@ const productsProduct_idPUT = ({ productUnderscoreid, productUpdate }) => new Pr
         selling_price,
         is_active,
         category_id
-      } = productUpdate.body;
+      } = updateData;
 
       const { rows } = await pool.query(
         `UPDATE "product" 
@@ -292,6 +322,11 @@ const productsProduct_idPUT = ({ productUnderscoreid, productUpdate }) => new Pr
          max_stock_level, delivery_time, purchase_price, 
          selling_price, is_active, category_id, product_id]
       );
+
+ if (rows.length === 0) {
+        return reject(Service.rejectResponse('Product not found', 404));
+      }
+
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(

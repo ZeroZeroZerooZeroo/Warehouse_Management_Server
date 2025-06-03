@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 const Service = require('./Service');
-
+const pool = require('../db');
 /**
 * Get all notifications
 *
@@ -32,14 +32,14 @@ const notificationsGET = () => new Promise(
 * notificationUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const notificationsNotification_idDELETE = ({ notificationUnderscoreid }) => new Promise(
+const notificationsNotification_idDELETE = ( notification_id ) => new Promise(
   async (resolve, reject) => {
     try {
       const { rows } = await pool.query(
         `DELETE FROM "notification" 
         WHERE notification_id = $1 
         RETURNING *`,
-        [notificationUnderscoreid]
+        [notification_id]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -56,19 +56,24 @@ const notificationsNotification_idDELETE = ({ notificationUnderscoreid }) => new
 * notificationUnderscoreid Integer 
 * returns Notification
 * */
-const notificationsNotification_idGET = ({ notificationUnderscoreid }) => new Promise(
+const notificationsNotification_idGET = ( notification_id ) => new Promise(
   async (resolve, reject) => {
     try {
      const { rows } = await pool.query(
         `SELECT * FROM "notification" 
         WHERE notification_id = $1`,
-        [notificationUnderscoreid]
+        [notification_id]
       );
-      resolve(Service.successResponse(rows[0]));
+
+if (rows.length === 0) {
+        return reject(Service.rejectResponse('Notification not found', 404));
+      }
+
+      resolve(rows[0]);
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+       e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -80,11 +85,15 @@ const notificationsNotification_idGET = ({ notificationUnderscoreid }) => new Pr
 * notificationUpdate NotificationUpdate 
 * returns Notification
 * */
-const notificationsNotification_idPUT = ({ notificationUnderscoreid, notificationUpdate }) => new Promise(
+const notificationsNotification_idPUT = ( notification_id,updateData  ) => new Promise(
   async (resolve, reject) => {
     try {
-     const { notification_id } = notificationUnderscoreid;
-      const { title, message, is_read } = notificationUpdate.body;
+
+  if (typeof notification_id !== 'number' || isNaN(notification_id)) {
+        return reject(Service.rejectResponse('Invalid notification ID', 400));
+      }
+
+      const { title, message, is_read } = updateData;
 
       const { rows } = await pool.query(
         `UPDATE "notification" 
@@ -96,11 +105,16 @@ const notificationsNotification_idPUT = ({ notificationUnderscoreid, notificatio
         RETURNING *`,
         [title, message, is_read, notification_id]
       );
+
+      if (rows.length === 0) {
+        return reject(Service.rejectResponse('Notification not found', 404));
+      }
+
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -111,7 +125,7 @@ const notificationsNotification_idPUT = ({ notificationUnderscoreid, notificatio
 * notificationCreate NotificationCreate 
 * returns Notification
 * */
-const notificationsPOST = ({ notificationCreate }) => new Promise(
+const notificationsPOST = ( notificationCreate ) => new Promise(
   async (resolve, reject) => {
     try {
       const { title, message, is_read } = notificationCreate.body;

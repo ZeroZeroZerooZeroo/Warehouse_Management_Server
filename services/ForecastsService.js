@@ -1,20 +1,20 @@
 /* eslint-disable no-unused-vars */
 const Service = require('./Service');
-
+const pool = require('../db');
 /**
 * Delete demand forecast
 *
 * forecastUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const forecastsForecast_idDELETE = ({ forecastUnderscoreid }) => new Promise(
+const forecastsForecast_idDELETE = ( forecast_id ) => new Promise(
   async (resolve, reject) => {
     try {
       const { rows } = await pool.query(
         `DELETE FROM "demand_forecasts" 
         WHERE forecast_id = $1 
         RETURNING *`,
-        [forecastUnderscoreid]
+        [forecast_id]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -31,19 +31,22 @@ const forecastsForecast_idDELETE = ({ forecastUnderscoreid }) => new Promise(
 * forecastUnderscoreid Integer 
 * returns DemandForecast
 * */
-const forecastsForecast_idGET = ({ forecastUnderscoreid }) => new Promise(
+const forecastsForecast_idGET = ( forecast_id ) => new Promise(
   async (resolve, reject) => {
     try {
       const { rows } = await pool.query(
         `SELECT * FROM "demand_forecasts" 
         WHERE forecast_id = $1`,
-        [forecastUnderscoreid]
+        [forecast_id]
       );
-      resolve(Service.successResponse(rows[0]));
+      if (rows.length === 0) {
+        return reject(Service.rejectResponse('Forecast not found', 404));
+      }
+      resolve(rows[0]);
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+       e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -55,17 +58,19 @@ const forecastsForecast_idGET = ({ forecastUnderscoreid }) => new Promise(
 * demandForecastUpdate DemandForecastUpdate 
 * returns DemandForecast
 * */
-const forecastsForecast_idPUT = ({ forecastUnderscoreid, demandForecastUpdate }) => new Promise(
+const forecastsForecast_idPUT = ( forecast_id, updateData ) => new Promise(
   async (resolve, reject) => {
     try {
-       const { forecast_id } = forecastUnderscoreid;
+       if (typeof forecast_id !== 'number' || isNaN(forecast_id)) {
+        return reject(Service.rejectResponse('Invalid forecast ID', 400));
+      }
       const {
         period_start,
         period_end,
         predicted_quantity,
         record_id,
         forecasts_type_id
-      } = demandForecastUpdate.body;
+      } = updateData;
 
       const { rows } = await pool.query(
         `UPDATE "demand_forecasts" 
@@ -79,11 +84,16 @@ const forecastsForecast_idPUT = ({ forecastUnderscoreid, demandForecastUpdate })
         RETURNING *`,
         [period_start, period_end, predicted_quantity, record_id, forecasts_type_id, forecast_id]
       );
+
+if (rows.length === 0) {
+        return reject(Service.rejectResponse('Forecast not found', 404));
+      }
+
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+       e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -118,7 +128,7 @@ const forecastsGET = () => new Promise(
 * demandForecastCreate DemandForecastCreate 
 * returns DemandForecast
 * */
-const forecastsPOST = ({ demandForecastCreate }) => new Promise(
+const forecastsPOST = ( demandForecastCreate ) => new Promise(
   async (resolve, reject) => {
     try {
       const {
@@ -152,14 +162,14 @@ const forecastsPOST = ({ demandForecastCreate }) => new Promise(
 * forecastsUnderscoretypeUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const forecasts_typesForecasts_type_idDELETE = ({ forecastsUnderscoretypeUnderscoreid }) => new Promise(
+const forecasts_typesForecasts_type_idDELETE = ( forecasts_type_id ) => new Promise(
   async (resolve, reject) => {
     try {
        const { rows } = await pool.query(
         `DELETE FROM "farecasts_type" 
         WHERE forecasts_type_id = $1 
         RETURNING *`,
-        [forecastsUnderscoretypeUnderscoreid]
+        [forecasts_type_id]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -176,19 +186,24 @@ const forecasts_typesForecasts_type_idDELETE = ({ forecastsUnderscoretypeUndersc
 * forecastsUnderscoretypeUnderscoreid Integer 
 * returns ForecastsType
 * */
-const forecasts_typesForecasts_type_idGET = ({ forecastsUnderscoretypeUnderscoreid }) => new Promise(
+const forecasts_typesForecasts_type_idGET = ( forecasts_type_id ) => new Promise(
   async (resolve, reject) => {
     try {
        const { rows } = await pool.query(
         `SELECT * FROM "farecasts_type" 
         WHERE forecasts_type_id = $1`,
-        [forecastsUnderscoretypeUnderscoreid]
+        [forecasts_type_id]
       );
-      resolve(Service.successResponse(rows[0]));
+
+ if (rows.length === 0) {
+        return reject(Service.rejectResponse('Forecasts type not found', 404));
+      }
+
+      resolve(rows[0]);
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+       e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -200,11 +215,15 @@ const forecasts_typesForecasts_type_idGET = ({ forecastsUnderscoretypeUnderscore
 * forecastsTypeUpdate ForecastsTypeUpdate 
 * returns ForecastsType
 * */
-const forecasts_typesForecasts_type_idPUT = ({ forecastsUnderscoretypeUnderscoreid, forecastsTypeUpdate }) => new Promise(
+const forecasts_typesForecasts_type_idPUT = ( forecasts_type_id, updateData ) => new Promise(
   async (resolve, reject) => {
     try {
-      const { forecasts_type_id } = forecastsUnderscoretypeUnderscoreid;
-      const { new_name } = forecastsTypeUpdate.body;
+
+
+       if (typeof forecasts_type_id !== 'number' || isNaN(forecasts_type_id)) {
+        return reject(Service.rejectResponse('Invalid forecasts type ID', 400));
+      }
+      const { new_name } = updateData;
 
       const { rows } = await pool.query(
         `UPDATE "farecasts_type" 
@@ -213,11 +232,16 @@ const forecasts_typesForecasts_type_idPUT = ({ forecastsUnderscoretypeUnderscore
         RETURNING *`,
         [new_name, forecasts_type_id]
       );
+
+         if (rows.length === 0) {
+        return reject(Service.rejectResponse('Forecasts type not found', 404));
+      }
+      
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -246,15 +270,17 @@ const forecasts_typesGET = () => new Promise(
 * forecastsTypeCreate ForecastsTypeCreate 
 * returns ForecastsType
 * */
-const forecasts_typesPOST = ({ forecastsTypeCreate }) => new Promise(
+const forecasts_typesPOST = ( forecastsTypeCreate ) => new Promise(
   async (resolve, reject) => {
     try {
-      const { forecasts_type_id, name_forecasts_type } = forecastsTypeCreate.body;
+      const { name_forecasts_type } = forecastsTypeCreate.body;
+      
+
       const { rows } = await pool.query(
-        `INSERT INTO "farecasts_type" (forecasts_type_id, name_forecasts_type)
-        VALUES ($1, $2) 
-        RETURNING *`,
-        [forecasts_type_id, name_forecasts_type]
+        `INSERT INTO "farecasts_type" (name_forecasts_type)
+        VALUES ($1) 
+        RETURNING *`, 
+        [name_forecasts_type]
       );
       resolve(Service.successResponse(rows[0], 201));
     } catch (e) {

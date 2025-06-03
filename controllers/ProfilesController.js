@@ -9,15 +9,52 @@
 const Controller = require('./Controller');
 const service = require('../services/ProfilesService');
 const usersUser_idProfileGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.usersUser_idProfileGET);
+  const user_id = Number(request.params.user_id);
+    
+    if (isNaN(user_id)) {
+      return response.status(400).json({ error: "Invalid user ID" });
+    }
+  
+    try {
+      const userData = await service.usersUser_idProfileGET(user_id);
+      response.status(200).json(userData);  
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 const usersUser_idProfilePOST = async (request, response) => {
-  await Controller.handleRequest(request, response, service.usersUser_idProfilePOST);
+  const user_id = Number(request.params.user_id);
+  
+  if (isNaN(user_id)) {
+    return response.status(400).json({ error: "Invalid user ID" });
+  }
+
+  try {
+    const result = await service.usersUser_idProfilePOST(
+      user_id, 
+      request.body  
+    );
+    response.status(201).json(result);
+  } catch (e) {
+    response.status(e.status || 500).json({ error: e.message });
+  }
 };
 
 const usersUser_idProfilePUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.usersUser_idProfilePUT);
+  try {
+      const user_id = Number(request.params.user_id);
+      if (isNaN(user_id)) {
+        return response.status(400).json({ error: "Invalid user ID" });
+      }
+  
+      const updateData = request.body;
+  
+      const result = await service.usersUser_idProfilePUT(user_id, updateData);
+      response.status(200).json(result.data);
+    } catch (e) {
+      response.status(e.status || 500).json({ error: e.message });
+    }
 };
 
 

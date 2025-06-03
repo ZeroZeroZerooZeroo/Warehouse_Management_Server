@@ -27,7 +27,7 @@ const rolesGET = () => new Promise(
 * userRoleCreate UserRoleCreate 
 * returns UserRole
 * */
-const rolesPOST = ({ userRoleCreate }) => new Promise(
+const rolesPOST = ( userRoleCreate ) => new Promise(
   async (resolve, reject) => {
     try {
       const {
@@ -56,14 +56,14 @@ const rolesPOST = ({ userRoleCreate }) => new Promise(
 * roleUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const rolesRole_idDELETE = ({ roleUnderscoreid }) => new Promise(
+const rolesRole_idDELETE = ( role_id ) => new Promise(
   async (resolve, reject) => {
     try {
       const { rows } = await pool.query(
         `DELETE FROM "user_role" 
         WHERE role_id = $1 
         RETURNING *`,
-        [roleUnderscoreid]
+        [role_id]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -80,19 +80,22 @@ const rolesRole_idDELETE = ({ roleUnderscoreid }) => new Promise(
 * roleUnderscoreid Integer 
 * returns UserRole
 * */
-const rolesRole_idGET = ({ roleUnderscoreid }) => new Promise(
+const rolesRole_idGET = ( role_id ) => new Promise(
   async (resolve, reject) => {
     try {
       const { rows } = await pool.query(
         `SELECT * FROM "user_role" 
         WHERE role_id = $1`,
-        [roleUnderscoreid]
+        [role_id]
       );
-      resolve(Service.successResponse(rows[0]));
+      if (rows.length === 0) {
+        return reject(Service.rejectResponse('Role not found', 404));
+      }
+      resolve(rows[0]);
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -104,11 +107,13 @@ const rolesRole_idGET = ({ roleUnderscoreid }) => new Promise(
 * userRoleUpdate UserRoleUpdate 
 * returns UserRole
 * */
-const rolesRole_idPUT = ({ roleUnderscoreid, userRoleUpdate }) => new Promise(
+const rolesRole_idPUT = ( role_id, updateData ) => new Promise(
   async (resolve, reject) => {
     try {
-      const role_id = roleUnderscoreid;
-      const { new_role_name } = userRoleUpdate.body;
+      if (typeof role_id !== 'number' || isNaN(role_id)) {
+        return reject(Service.rejectResponse('Invalid role ID', 400));
+      }
+      const { new_role_name } = updateData;
       
       const { rows } = await pool.query(
         `UPDATE "user_role" 
@@ -117,11 +122,14 @@ const rolesRole_idPUT = ({ roleUnderscoreid, userRoleUpdate }) => new Promise(
         RETURNING *`,
         [new_role_name, role_id]
       );
+      if (rows.length === 0) {
+        return reject(Service.rejectResponse('Role not found', 404));
+      }
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -202,14 +210,14 @@ const { rows } = await pool.query(
 * userUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const usersUser_idDELETE = ({ userUnderscoreid }) => new Promise(
+const usersUser_idDELETE = ( user_id ) => new Promise(
   async (resolve, reject) => {
     try {
       const { rows } = await pool.query(
         `DELETE FROM "user" 
         WHERE user_id = $1 
         RETURNING *`,
-        [userUnderscoreid]
+        [user_id]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -226,7 +234,7 @@ const usersUser_idDELETE = ({ userUnderscoreid }) => new Promise(
 * userUnderscoreid Integer 
 * returns User
 * */
-const usersUser_idGET = ({ userUnderscoreid }) => new Promise(
+const usersUser_idGET = ( user_id ) => new Promise(
   async (resolve, reject) => {
      try {
     const { rows } = await pool.query(
@@ -241,7 +249,7 @@ const usersUser_idGET = ({ userUnderscoreid }) => new Promise(
         LEFT JOIN "user_profile" up 
         ON u.user_id = up.user_id AND u.role_id = up.role_id
         WHERE u.user_id = $1`,
-      [userUnderscoreid]
+      [user_id]
     );
 
     if (rows.length === 0) {
@@ -249,11 +257,11 @@ const usersUser_idGET = ({ userUnderscoreid }) => new Promise(
       return;
     }
 
-    resolve(Service.successResponse(rows[0]));
+    resolve(rows[0]);
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -265,10 +273,13 @@ const usersUser_idGET = ({ userUnderscoreid }) => new Promise(
 * userUpdate UserUpdate 
 * returns User
 * */
-const usersUser_idPUT = ({ userUnderscoreid, userUpdate }) => new Promise(
+const usersUser_idPUT = ( user_id, updateData ) => new Promise(
   async (resolve, reject) => {
     try {
-      const user_id = userUnderscoreid;
+      // Проверка типа ID
+      if (typeof user_id !== 'number' || isNaN(user_id)) {
+        return reject(Service.rejectResponse('Invalid user ID', 400));
+      }
       const {
         username,
         password,
@@ -277,7 +288,7 @@ const usersUser_idPUT = ({ userUnderscoreid, userUpdate }) => new Promise(
         is_active,
         inn,
         organization
-      } = userUpdate.body;
+      } = updateData;
 
       const { rows } = await pool.query(
         `UPDATE "user" 
@@ -297,8 +308,8 @@ const usersUser_idPUT = ({ userUnderscoreid, userUpdate }) => new Promise(
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },

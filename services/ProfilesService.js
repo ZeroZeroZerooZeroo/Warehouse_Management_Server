@@ -1,25 +1,30 @@
 /* eslint-disable no-unused-vars */
 const Service = require('./Service');
-
+const pool = require('../db');
 /**
 * Get user profile
 *
 * userUnderscoreid Integer 
 * returns UserProfile
 * */
-const usersUser_idProfileGET = ({ userUnderscoreid }) => new Promise(
+const usersUser_idProfileGET = ( user_id ) => new Promise(
   async (resolve, reject) => {
     try {
       const { rows } = await pool.query(
         `SELECT * FROM "user_profile"
         WHERE user_id = $1`,
-        [userUnderscoreid]
+        [user_id]
       );
-      resolve(Service.successResponse(rows[0]));
+
+if (rows.length === 0) {
+        return reject(Service.rejectResponse('User not found', 404));
+      }
+
+      resolve(rows[0]);
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+       e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },
@@ -31,10 +36,9 @@ const usersUser_idProfileGET = ({ userUnderscoreid }) => new Promise(
 * userProfileCreate UserProfileCreate 
 * returns UserProfile
 * */
-const usersUser_idProfilePOST = ({ userUnderscoreid, userProfileCreate }) => new Promise(
+const usersUser_idProfilePOST = ( user_id, userProfileCreate ) => new Promise(
   async (resolve, reject) => {
     try {
-      const { user_id } = userUnderscoreid;
       const {
         full_name,
         phone,
@@ -43,7 +47,7 @@ const usersUser_idProfilePOST = ({ userUnderscoreid, userProfileCreate }) => new
         birth_date,
         avatar_path,
         role_id
-      } = userProfileCreate.body;
+      } = userProfileCreate;
 
       const { rows } = await pool.query(
         `INSERT INTO "user_profile" (
@@ -70,10 +74,14 @@ const usersUser_idProfilePOST = ({ userUnderscoreid, userProfileCreate }) => new
 * userProfileUpdate UserProfileUpdate 
 * returns UserProfile
 * */
-const usersUser_idProfilePUT = ({ userUnderscoreid, userProfileUpdate }) => new Promise(
+const usersUser_idProfilePUT = ( user_id, updateData ) => new Promise(
   async (resolve, reject) => {
     try {
-      const { user_id } = userUnderscoreid;
+
+if (typeof user_id !== 'number' || isNaN(user_id)) {
+        return reject(Service.rejectResponse('Invalid user ID', 400));
+      }
+
       const {
         full_name,
         phone,
@@ -81,7 +89,7 @@ const usersUser_idProfilePUT = ({ userUnderscoreid, userProfileUpdate }) => new 
         department,
         birth_date,
         avatar_path
-      } = userProfileUpdate.body;
+      } = updateData;
 
       const { rows } = await pool.query(
         `UPDATE "user_profile" 
@@ -97,11 +105,16 @@ const usersUser_idProfilePUT = ({ userUnderscoreid, userProfileUpdate }) => new 
         [full_name, phone, position, department, 
          birth_date, avatar_path, user_id]
       );
+
+ if (rows.length === 0) {
+        return reject(Service.rejectResponse('USer not found', 404));
+      }
+
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
   },

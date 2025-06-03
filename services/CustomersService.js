@@ -1,20 +1,20 @@
 /* eslint-disable no-unused-vars */
 const Service = require('./Service');
-
+const pool = require('../db');
 /**
 * Delete customer
 *
 * customerUnderscoreid Integer 
 * no response value expected for this operation
 * */
-const customersCustomer_idDELETE = ({ customerUnderscoreid }) => new Promise(
+const customersCustomer_idDELETE = ( customer_id ) => new Promise(
   async (resolve, reject) => {
     try {
       const { rows } = await pool.query(
         `DELETE FROM "customer" 
         WHERE customer_id = $1 
         RETURNING *`,
-        [customerUnderscoreid]
+        [customer_id]
       );
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
@@ -31,22 +31,28 @@ const customersCustomer_idDELETE = ({ customerUnderscoreid }) => new Promise(
 * customerUnderscoreid Integer 
 * returns Customer
 * */
-const customersCustomer_idGET = ({ customerUnderscoreid }) => new Promise(
+const customersCustomer_idGET = (customer_id) => new Promise(
   async (resolve, reject) => {
     try {
-       const { rows } = await pool.query(
+      const { rows } = await pool.query(
         `SELECT * FROM "customer" 
         WHERE customer_id = $1`,
-        [customerUnderscoreid]
+        [customer_id]
       );
-      resolve(Service.successResponse(rows[0]));
+      
+      if (rows.length === 0) {
+        return reject(Service.rejectResponse('Customer not found', 404));
+      }
+      
+      // Возвращаем непосредственно данные, без дополнительной обертки
+      resolve(rows[0]);
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+       e.message || 'Database error',
+        e.status || 500,
       ));
     }
-  },
+  }
 );
 /**
 * Update customer
@@ -55,10 +61,14 @@ const customersCustomer_idGET = ({ customerUnderscoreid }) => new Promise(
 * customerUpdate CustomerUpdate 
 * returns Customer
 * */
-const customersCustomer_idPUT = ({ customerUnderscoreid, customerUpdate }) => new Promise(
+const customersCustomer_idPUT = (customer_id, updateData) => new Promise(
   async (resolve, reject) => {
     try {
-      const { customer_id } = customerUnderscoreid;
+      // Проверка типа ID
+      if (typeof customer_id !== 'number' || isNaN(customer_id)) {
+        return reject(Service.rejectResponse('Invalid customer ID', 400));
+      }
+
       const {
         name,
         phone,
@@ -68,32 +78,47 @@ const customersCustomer_idPUT = ({ customerUnderscoreid, customerUpdate }) => ne
         discount_rate,
         status,
         total_purchases
-      } = customerUpdate.body;
+      } = updateData;
 
       const { rows } = await pool.query(
         `UPDATE "customer" 
         SET 
-          name = $1,
-          phone = $2,
-          email = $3,
-          address = $4,
-          inn = $5,
-          discount_rate = $6,
-          status = $7,
+          name = COALESCE($1, name),
+          phone = COALESCE($2, phone),
+          email = COALESCE($3, email),
+          address = COALESCE($4, address),
+          inn = COALESCE($5, inn),
+          discount_rate = COALESCE($6, discount_rate),
+          status = COALESCE($7, status),
           last_sale_date = NOW(),
-          total_purchases = $8
+          total_purchases = COALESCE($8, total_purchases)
         WHERE customer_id = $9
         RETURNING *`,
-        [name, phone, email, address, inn, discount_rate, status, total_purchases, customer_id]
+        [
+          name, 
+          phone, 
+          email, 
+          address, 
+          inn, 
+          discount_rate, 
+          status, 
+          total_purchases, 
+          customer_id
+        ]
       );
+
+      if (rows.length === 0) {
+        return reject(Service.rejectResponse('Customer not found', 404));
+      }
+      
       resolve(Service.successResponse(rows[0]));
     } catch (e) {
       reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
+        e.message || 'Database error',
+        e.status || 500,
       ));
     }
-  },
+  }
 );
 /**
 * Get all customers
@@ -119,7 +144,7 @@ const customersGET = () => new Promise(
 * customerCreate CustomerCreate 
 * returns Customer
 * */
-const customersPOST = ({ customerCreate }) => new Promise(
+const customersPOST = ( customerCreate ) => new Promise(
   async (resolve, reject) => {
     try {
        const {
