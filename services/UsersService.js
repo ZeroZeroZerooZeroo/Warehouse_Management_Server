@@ -145,7 +145,8 @@ const usersGET = () => new Promise(
       const { rows } = await pool.query(
         `SELECT  
         u.user_id, 
-        u.username, 
+        u.username,
+        u.password, 
         u.email, 
         ur."Role" AS role,
         u.is_active, 
@@ -315,6 +316,32 @@ const usersUser_idPUT = ( user_id, updateData ) => new Promise(
   },
 );
 
+const usersLoginPOST = ( LoginRequest ) => new Promise(
+  async (resolve, reject) => {
+
+    try {
+      const {
+        username,
+        password
+      } = LoginRequest.body;
+
+const { rows } = await pool.query(
+  `SELECT user_id, username, email, role_id, is_active, created_at, last_login, inn, organization 
+       FROM "user" 
+       WHERE username = $1 AND password = $2`,
+      [username, password]
+);
+    
+    resolve(Service.successResponse(rows[0], 201));
+    } catch (e) {
+      reject(Service.rejectResponse(
+        e.message || 'Invalid input',
+        e.status || 405,
+      ));
+    }
+  },
+);
+
 module.exports = {
   rolesGET,
   rolesPOST,
@@ -326,4 +353,5 @@ module.exports = {
   usersUser_idDELETE,
   usersUser_idGET,
   usersUser_idPUT,
+  usersLoginPOST,
 };

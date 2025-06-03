@@ -125,7 +125,9 @@ const usersUser_idPUT = async (request, response) => {
     response.status(e.status || 500).json({ error: e.message });
   }
 };
-
+const usersLoginPOST = async (request, response) => {
+  await Controller.handleRequest(request, response, service.usersLoginPOST);
+};
 
 module.exports = {
   rolesGET,
@@ -138,4 +140,5 @@ module.exports = {
   usersUser_idDELETE,
   usersUser_idGET,
   usersUser_idPUT,
+  usersLoginPOST,
 };
